@@ -48,9 +48,9 @@ for device_name in device_list:
     else:
         print "[*] Failed! %s is Not a valid device" % device_file
 
-    if not len(valid_devices):
-        print "[*] No Valid devices found. Exiting..."
-        sys.exit(0)
+if not len(valid_devices):
+    print "[*] No Valid devices found. Exiting..."
+    sys.exit(0)
 
 # run the fuzzing 
 
@@ -66,7 +66,7 @@ while(1):
     fd.write("[*] Buffer length : %d\n" % current_length)
 
     in_buffer = "A" * current_length
-    out_buffer = (c_char * current_length)()
+    out_buf = (c_char * current_length)()
     bytes_returned = c_ulong(current_length)
 
     driver_handle = kernel32.CreateFile(device_file, GENERIC_READ | GENERIC_WRITE, 0, None, OPEN_EXISTING, 0, None)
