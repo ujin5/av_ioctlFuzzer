@@ -79,7 +79,7 @@ class file_fuzzer:
      # pass the parsing-target file 
      pid = self.dbg.load(self.exe_path, "test.%s" % self.ext)  
 
-     self.pip = self.dbg.pid 
+     self.pid = self.dbg.pid 
      self.dbg.run() 
 
 
