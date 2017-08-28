@@ -10,7 +10,7 @@
 1. Make `examples` and `crashes` directories in the parent directory of the script.
 2. Make seed files (suitable for fuzzee) in the `examples` directory.
 3. changing the source code "lib/site-packages/pygdb/pygdb.py"  
-   : if mbi.State != MEM_COMMIT or mbi.Type == MEM_IMAGE: -> if mbi.State != MEM_COMMIT
+   (if mbi.State != MEM_COMMIT or mbi.Type == MEM_IMAGE: -> if mbi.State != MEM_COMMIT)
 4. `python file_fuzzer.py -e [fuzzee path] -x .[extension for seed files]`
 
 
