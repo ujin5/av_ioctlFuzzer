@@ -5,7 +5,7 @@ import zlib
 # import fuzz_utils
 
 
-class Compress_FUZZ:
+class COMP_FUZZ:
 
     def __init__(self, seed_dir, out_dir, filename):
     
@@ -13,32 +13,32 @@ class Compress_FUZZ:
         self.OUT_DIR = out_dir  
         self.FILENAME = filename
         self.INPUT = ""
-        self.NEW_DATA = ""
+        self.new_data = ""
         f = open(self.SEED_DIR + self.FILENAME, "rb")
         self.INPUT = f.read()
 
-    def write_file(self):
+    def Mutation(self):
 
         ext = self.FILENAME.split(".")[1]
     
         if(ext == "zip"):
-            self.NEW_DATA = self.zip_fuzz()
+            self.new_data = self.zip_fuzz()
             
         elif(ext == "gz"):
-            self.NEW_DATA = self.gzip2_fuzz()
+            self.new_data = self.gzip_fuzz()
             
         elif(ext == "7z"):
-            self.NEW_DATA = self.sevenzip_fuzz()
+            self.new_data = self.sevenzip_fuzz()
             
         elif(ext == "rar"):
-            self.NEW_DATA = self.rar_fuzz()
+            self.new_data = self.rar_fuzz()
 
         else:
-            self.NEW_DATA = None
+            self.new_data = None
 
-        if(self.NEW_DATA != None):       
+        if(self.new_data != None):       
             f = open(self.OUT_DIR + self.FILENAME, "wb")
-            f.write(self.NEW_DATA)
+            f.write(self.new_data)
         
     def zip_fuzz(self):
         
@@ -53,7 +53,8 @@ class Compress_FUZZ:
         CHECKSUM = self.INPUT[length-8:length-4]
         FILESIZE = self.INPUT[length-4:]
 
-        zzbuf = pyZZUF(self.INPUT[2:-8])
+        zzbuf = pyZZUF(self.INPUT[2:])
+        zzbuf.set_ratio(0.3)
 
         rdata = ""
         rdata += SIGN
@@ -68,6 +69,7 @@ class Compress_FUZZ:
         SIGN = self.INPUT[:6]
 
         zzbuf = pyZZUF(self.INPUT[6:])
+        zzbuf.set_ratio(0.3)
 
         rdata = ""
         rdata += SIGN
@@ -87,7 +89,9 @@ class Compress_FUZZ:
         HEAD_TYPE1 = chr(0x73)
         HEAD_TYPE2 = chr(0x74)
 
-        fuzzed_data = pyZZUF(self.INPUT).mutate().tostring()
+        fuzzed_data = pyZZUF(self.INPUT)
+        fuzzed_data.set_ratio(0.3)
+        fuzzed_data = fuzzed_data.mutate().tostring()
 
         rdata = ""
         rdata += SIGN
@@ -124,11 +128,9 @@ class Compress_FUZZ:
 
     
 
-seed_dir = "C:\\Users\\JungUn\\Desktop\\seedfolder\\"
-out_dir = "C:\\Users\\JungUn\\Desktop\\outfolder\\"
-filelist = os.listdir(seed_dir)
 
-for filename in filelist:
 
-    fuzzer = Compress_FUZZ(seed_dir, out_dir, filename)
-    fuzzer.write_file()
+
+    
+    
+    
