@@ -20,13 +20,13 @@ while True:
 		ext = filename.split(".")[1]
 
 		if(ext in COMP_list):
-	    	fuzzer = COMP_fuzzer.COMP_FUZZ(seed_dir, out_dir, filename)
-	    	fuzzer.Mutation()
+	    		fuzzer = COMP_fuzzer.COMP_FUZZ(seed_dir, out_dir, filename)
+	    		fuzzer.Mutation()
 	    
-	    if(ext in PE_list):
-	    	fuzzer = PE_fuzzer.PE_FUZZ(seed_dir, out_dir, filename)
-	    	fuzzer.Mutation()
+		if(ext in PE_list):
+	    		fuzzer = PE_fuzzer.PE_FUZZ(seed_dir, out_dir, filename)
+	    		fuzzer.Mutation()
 	    
-	    if(ext in OLE_list):
-	    	fuzzer = OLE_fuzzer.OLE_FUZZ(seed_dir, out_dir, filename)
-	    	fuzzer.Mutation()
+	    	if(ext in OLE_list):
+	    		fuzzer = OLE_fuzzer.OLE_FUZZ(seed_dir, out_dir, filename)
+	    		fuzzer.Mutation()
