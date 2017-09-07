@@ -1,12 +1,11 @@
 """
 OLE Fuzzer 
 """
-import OleFileIO_PL
-import os
-import shutil
-from random import uniform, sample, choice
-import random
 from pyZZUF import *
+from random import choice
+import OleFileIO_PL
+import shutil
+import os
 
 def pick():
     pick_file = choice(os.listdir("seed_dir"))
