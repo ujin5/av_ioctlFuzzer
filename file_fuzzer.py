@@ -1,209 +1,134 @@
-
-from pydbg import * 
-from pydbg.defines import * 
-import utils 
-import random 
-import sys 
-import struct 
-import threading 
-import os 
-import shutil 
-import time 
-import getopt 
-
-class file_fuzzer: 
-
-    def __init__(self, exe_path, ext, notify): 
-
-     self.exe_path = exe_path 
-     self.ext = ext 
-     self.notify_crash = notify 
-     self.orig_file = None 
-     self.mutated_file = None 
-     self.iteration = 0 
-     self.crash = None 
-     self.send_notify = False 
-     self.pid = None 
-     self.in_accessv_handler = False 
-     self.dbg = None 
-     self.running = False 
-     self.ready = False 
-     self.test_cases = ["%s%n%s%n%s%n", "\xff", "\x00", "A"] 
-
-    def file_picker(self): 
-      
-     file_list = os.listdir("examples/") 
-     list_length = len(file_list) 
-     file = file_list[random.randint(0, list_length -1)] 
-     shutil.copy("examples\\%s" % file, "test.%s" % self.ext) 
-
-     return file 
+from pyZZUF import *
+import os
+import ZIP_fuzz 
+import zlib
+# import fuzz_utils
 
 
-    def fuzz(self): 
+class Compress_FUZZ:
 
-     while 1: 
-         if not self.running: 
+    def __init__(self, seed_dir, out_dir, filename):
+    
+        self.SEED_DIR = seed_dir
+        self.OUT_DIR = out_dir  
+        self.FILENAME = filename
+        self.INPUT = ""
+        self.new_data = ""
+        f = open(self.SEED_DIR + self.FILENAME, "rb")
+        self.INPUT = f.read()
 
-             self.test_file = self.file_picker() 
-             self.mutate_file() 
-          
-             # running debug thread 
-             pydbg_thread = threading.Thread(target=self.start_debugger) 
-             pydbg_thread.setDaemon(0) 
-             pydbg_thread.start() 
+    def write_file(self):
 
-             while self.pid == None: 
-                 time.sleep(1) 
+        ext = self.FILENAME.split(".")[1]
+    
+        if(ext == "zip"):
+            self.new_data = self.zip_fuzz()
+            
+        elif(ext == "gz"):
+            self.new_data = self.gzip2_fuzz()
+            
+        elif(ext == "7z"):
+            self.new_data = self.sevenzip_fuzz()
+            
+        elif(ext == "rar"):
+            self.new_data = self.rar_fuzz()
 
-             # running monitoring thread 
-             monitor_thread = threading.Thread(target=self.monitor_debugger) 
-             monitor_thread.setDaemon(0) 
-             monitor_thread.start() 
+        else:
+            self.new_data = None
 
-             self.iteration += 1 
-
-         else: 
-             time.sleep(1) 
-
-
-    # debugger thread which starts the application 
-
-    def start_debugger(self): 
-      
-     print "[*] Starting debugger for iteration: %d" % self.iteration 
-     self.running = True 
-     self.dbg = pydbg() 
-
-     self.dbg.set_callback(EXCEPTION_ACCESS_VIOLATION, self.check_accessv) 
-     # pass the parsing-target file 
-     pid = self.dbg.load(self.exe_path, "test.%s" % self.ext)  
-
-     self.pid = self.dbg.pid 
-     self.dbg.run() 
-
-
-    # trace the errors and store the error info 
-
-    def check_accessv(self, dbg): 
-
-     if dbg.dbg.u.Exception.dwFirstChance: 
-         return DBG_CONTINUE 
-
-     print "[*] Handling an access violation" 
-     self.in_accessv_handler = True 
-     crash_bin = utils.crash_binning.crash_binning() 
-     crash_bin.record_crash(dbg) 
-     self.crash = crash_bin.crash_synopsis() 
-      
-     # write the error info 
-     crash_fd = open("crashes\\crash-%d" % self.iteration,"w") 
-     crash_fd.write(self.crash) 
-
-     shutil.copy("test.%s" % self.ext, "crashes\\%d.%s" % (self.iteration, self.ext)) 
-     shutil.copy("examples\\%s" % self.test_file, "crashes\\%d_orig.%s" % (self.iteration, self.ext)) 
-     self.dbg.terminate_process() 
-     self.in_accessv_handler = False 
-     self.running = False 
-
-     return DBG_EXCEPTION_NOT_HANDLED 
-
-
-    # running the application a few seconds, and terminate it. 
-
-    def monitor_debugger(self): 
-      
-     counter = 0 
-     print "[*] Monitor thread for pid: %d waiting." % self.pid, 
-      
-     while counter < 3: 
-         time.sleep(1) 
-         print counter, 
-         counter += 1 
-
-     if self.in_accessv_handler != True: 
-         time.sleep(1) 
-         self.dbg.terminate_process() 
-         self.pid = None 
-         self.running = False 
-     else: 
-         print "[*] The access violation handler is doing its business. Waiting." 
-          
-         while self.running: 
-             time.sleep(1) 
-
-
-    # modify the file 
-
-    def mutate_file(self): 
-
-     fd = open("test.%s" % self.ext, "rb") 
-     stream = fd.read() 
-     fd.close() 
-
-     test_case = self.test_cases[random.randint(0, len(self.test_cases)-1)] 
-     stream_length = len(stream) 
-     rand_offset = random.randint(0, stream_length - 1) 
-     rand_len = random.randint(1,1000) 
-
-     test_case = test_case * rand_len 
-
-     fuzz_file = stream[0:rand_offset] 
-     fuzz_file += str(test_case) 
-     fuzz_file += stream[rand_offset:] 
-
-     fd = open("test.%s" % self.ext, "wb") 
-     fd.write(fuzz_file) 
-     fd.close() 
-
-     return 
-
-
-def print_usage(): 
-
- print "[*]" 
- print "[*] file_fuzzer.py -e <Executable Path> -x <File Extension>" 
- print "[*]" 
-
- sys.exit(0) 
-
-if __name__ == "__main__": 
- print "[*] Generic File Fuzzer." 
-
-# PATH of application(Anti-Virus) and file extension 
-try: 
- opts, argo = getopt.getopt(sys.argv[1:], "e:x:n") 
-except getopt.GetoptError: 
- print_usage() 
-
-exe_path = None 
-ext = None 
-notify = False 
-
-for o,a in opts: 
- if o == "-e": 
-     exe_path = a 
- elif o == "-x": 
-     ext = a 
- elif o == "-n": 
-     notify = True 
-
-if exe_path is not None and ext is not None: 
- fuzzer = file_fuzzer(exe_path, ext, notify) 
- fuzzer.fuzz() 
-else: 
- print_usage() 
-
-
-
-
-
-
-
-
-
-
-
-
+        if(self.new_data != None):       
+            f = open(self.OUT_DIR + self.FILENAME, "wb")
+            f.write(self.new_data)
+        
+    def zip_fuzz(self):
+        
+        file_path = self.SEED_DIR + self.FILENAME
+        return ZIP_fuzz.main(self.SEED_DIR, self.OUT_DIR, self.FILENAME)
         
 
+    def gzip_fuzz(self):
+        
+        length = len(self.INPUT)
+        SIGN = self.INPUT[:2]
+        CHECKSUM = self.INPUT[length-8:length-4]
+        FILESIZE = self.INPUT[length-4:]
+
+        zzbuf = pyZZUF(self.INPUT[2:])
+
+        rdata = ""
+        rdata += SIGN
+        rdata += zzbuf.mutate().tostring()
+        rdata += CHECKSUM
+        rdata += FILESIZE
+
+        return rdata    
+
+    def sevenzip_fuzz(self):   # so dirty......
+    
+        SIGN = self.INPUT[:6]
+
+        zzbuf = pyZZUF(self.INPUT[6:])
+
+        rdata = ""
+        rdata += SIGN
+        rdata += zzbuf.mutate().tostring()
+
+        return rdata
+
+# def tar_fuzz(self):
+
+
+    def rar_fuzz(self):
+    
+        SIGN = self.INPUT[:0x5]
+        HEADER_SIZE = self.INPUT[0x5:0x7]
+        FILE_CHECKSUM = self.INPUT[0x24:0x28]
+        BHEADER_SIZE = self.INPUT[0x19:0x1b]
+        HEAD_TYPE1 = chr(0x73)
+        HEAD_TYPE2 = chr(0x74)
+
+        fuzzed_data = pyZZUF(self.INPUT).mutate().tostring()
+
+        rdata = ""
+        rdata += SIGN
+        rdata += HEADER_SIZE
+        
+        tmp_data = HEAD_TYPE1
+        tmp_data += fuzzed_data[0xa:0x14]
+
+        HEADER_CRC = zlib.crc32(tmp_data) & 0xffffffff
+        rdata += chr(HEADER_CRC & 0xff)
+        rdata += chr((HEADER_CRC >> 8) & 0xff)
+        rdata += tmp_data
+        
+        size = ord(BHEADER_SIZE[0]) + 0xff * ord(BHEADER_SIZE[1])
+        tmp_data = HEAD_TYPE2
+        tmp_data += fuzzed_data[0x17:0x19]
+        tmp_data += BHEADER_SIZE
+        tmp_data += fuzzed_data[0x1b:0x24]
+        tmp_data += FILE_CHECKSUM
+        tmp_data += fuzzed_data[0x28:0x14+size]
+        
+        BHEADER_CRC = zlib.crc32(tmp_data) & 0xffffffff
+        
+        rdata += chr(BHEADER_CRC & 0xff)
+        rdata += chr((BHEADER_CRC >> 8) & 0xff)
+        rdata += tmp_data
+        
+        rdata += fuzzed_data[0x14+size:-7]
+        
+        END_CRC = self.INPUT[-7:]
+        rdata += END_CRC
+         
+        return rdata
+
+    
+
+seed_dir = "C:\\Users\\JungUn\\Desktop\\seedfolder\\"
+out_dir = "C:\\Users\\JungUn\\Desktop\\outfolder\\"
+filelist = os.listdir(seed_dir)
+
+for filename in filelist:
+
+    fuzzer = Compress_FUZZ(seed_dir, out_dir, filename)
+    fuzzer.write_file()
