@@ -54,6 +54,5 @@ while True:
     ole = OLE_FUZZ(target_file)
     if OleFileIO_PL.isOleFile(target_file):
         ole.mutate()
-        print "success"
     else:
         continue
