@@ -21,7 +21,10 @@ class PE_FUZZ(object):
 	def Mutation(self):
 
 		self.ParsePE()
-		rdata = self.IS_PACKED ? PackMute() : NonPackMute() 
+		if self.IS_PACKED:
+			rdata = PackMute()
+		else:
+			rdata = NonPackMute()
 		f = open(self.TARGET,'w')
 		f.write(rdata)
 
@@ -83,5 +86,7 @@ class PE_FUZZ(object):
 		self.DATA = data
 	
 	def IsPacked(self):
-
-		self.IS_PACKED = path.find("packed") ? 1 : 0
+		if self.PATH.find("packed"):
+			self.IS_PACKED = True 
+		else:
+			self.IS_PACKED = False
