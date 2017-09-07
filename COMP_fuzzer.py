@@ -77,8 +77,6 @@ class COMP_FUZZ:
 
         return rdata
 
-# def tar_fuzz(self):
-
 
     def rar_fuzz(self):
     
