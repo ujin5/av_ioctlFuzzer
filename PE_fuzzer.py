@@ -5,12 +5,13 @@ IMAGE_DOS_HEADER = 0x0
 IMAGE_FILE_HEADER =  0x4
 IMAGE_OPTIONAL_HEADER = IMAGE_FILE_HEADER + 0x14
 
-class PE_FUZZ(object):
+class PE_FUZZ:
 
-	def __init__(self, path, target):
+	def __init__(self, seed_dir, out_dir, filename):
 
-		self.PATH = path
-		self.TARGET = target
+		self.PATH = seed_dir + filename
+		self.TARGET = out_dir + filename
+		self.FILENAME = filename
 		self.DATA = None
 		self.EP = None
 		self.DOS_HEADER = None
@@ -93,7 +94,7 @@ class PE_FUZZ(object):
 		self.DATA = data
 	
 	def IsPacked(self):
-		if self.PATH.find("packed"):
+		if self.FILENAME.find("packed"):
 			self.IS_PACKED = True 
 		else:
 			self.IS_PACKED = False
