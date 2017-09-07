@@ -13,7 +13,7 @@ class Compress_FUZZ:
         self.OUT_DIR = out_dir  
         self.FILENAME = filename
         self.INPUT = ""
-        self.new_data = ""
+        self.NEW_DATA = ""
         f = open(self.SEED_DIR + self.FILENAME, "rb")
         self.INPUT = f.read()
 
@@ -22,23 +22,23 @@ class Compress_FUZZ:
         ext = self.FILENAME.split(".")[1]
     
         if(ext == "zip"):
-            self.new_data = self.zip_fuzz()
+            self.NEW_DATA = self.zip_fuzz()
             
         elif(ext == "gz"):
-            self.new_data = self.gzip2_fuzz()
+            self.NEW_DATA = self.gzip2_fuzz()
             
         elif(ext == "7z"):
-            self.new_data = self.sevenzip_fuzz()
+            self.NEW_DATA = self.sevenzip_fuzz()
             
         elif(ext == "rar"):
-            self.new_data = self.rar_fuzz()
+            self.NEW_DATA = self.rar_fuzz()
 
         else:
-            self.new_data = None
+            self.NEW_DATA = None
 
-        if(self.new_data != None):       
+        if(self.NEW_DATA != None):       
             f = open(self.OUT_DIR + self.FILENAME, "wb")
-            f.write(self.new_data)
+            f.write(self.NEW_DATA)
         
     def zip_fuzz(self):
         
