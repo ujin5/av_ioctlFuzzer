@@ -1,11 +1,12 @@
 """
 OLE Fuzzer 
 """
-
+import OleFileIO_PL
 import os
 import shutil
 from random import uniform, sample, choice
 import random
+from pyZZUF import *
 
 def pick():
     pick_file = choice(os.listdir("seed_dir"))
@@ -15,47 +16,45 @@ def pick():
         emptyTemp()
     finally:
         shutil.copy(os.getcwd()+"\\seed_dir\\"+pick_file, "out_dir")
-
     return pick_file
 
-def mutate(target_file):
+class OLE_FUZZ:
 
-    target_file = os.getcwd()+"\\out_dir\\"+target_file
-    mutate_position = []
+    def __init__(self, target_file):
+        self.TARGET = target_file 
 
-    fuzz_offset = []
-    fuzz_byte = xrange(256)
+    def mutate(self):
 
-    with open(target_file, 'rb') as f:
-        ole = f.read()
+        self.TARGET = os.getcwd()+"\\out_dir\\"+self.TARGET
 
-    ole_write = bytearray(ole)
-    ole_length = len(ole)
+        with open(self.TARGET, 'rb') as f:
+            ole = f.read()
 
-    mutate_position = [random.randrange(16, ole_length/(random.randrange(1,10))), random.randrange(16, ole_length/(random.randrange(1,10)))]
+        ole = ole[9:]
+        print ole
+        ole = pyZZUF(ole)
+        ole_write = ole.mutate()
+        try:
+            with open(self.TARGET, 'wb') as f:
+                f.write(ole_write)
+            return True
+        except IOError as error:
+            print error
+            return False
 
-    fuzz_offset += sample(xrange(mutate_position[0],mutate_position[0]+mutate_position[1]), int(mutate_position[1]*uniform(0.001, 0.03)))
+    def emptyTemp():
+        while len(os.listdir("out_dir")) != 0 :
+            for x in os.listdir("out_dir"):
+                try:
+                    os.remove(r"out_dir\%s" % x)
+                except:
+                    pass
 
-    for index in fuzz_offset:
-        if index >= ole_length : continue
-        ole_write[index] = choice(fuzz_byte)
-
-    try:
-        with open(target_file, 'wb') as f:
-            f.write(ole_write)
-        return True
-    except IOError as error:
-        print error
-        return False
-
-def emptyTemp():
-    while len(os.listdir("out_dir")) != 0 :
-        for x in os.listdir("out_dir"):
-            try:
-                os.remove(r"out_dir\%s" % x)
-            except:
-                pass
-
-while True:
+while True:  
     target_file = pick()
-    mutate(target_file)
+    ole = OLE_FUZZ(target_file)
+    if OleFileIO_PL.isOleFile(target_file):
+        ole.mutate()
+        print "success"
+    else:
+        continue
