@@ -36,21 +36,25 @@ class PE_FUZZ(object):
 		
 		rdata += self.PE_HEADER[0x0:0x4] # Signature
 		
-		lfh_zzbuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
+		lfh_zzuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
+		lfh_zzuf.set_ratio(0.3)
 		rdata += lfh_zzuf.mutate().tostring().decode() # PE_HEADER 1 
 		
-		loh_zzbuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
+		loh_zzuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
+		loh_zzuf1.set_ratio(0.3)
 		rdata += loh_zzuf1.mutate().tostring().decode() # PE_HEADER 2
 		
 		rdata += struct.pack('<I',self.EP) # EP
 		
-		loh_zzbuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:self.EP])
+		loh_zzuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:self.EP])
+		loh_zzuf2.set_ratio(0.3)
 		rdata += loh_zzuf2.mutate().tostring().decode() # PE_HEADER 3 
 		
 		rdata += self.PE_HEADER[self.EP:self.EP+0x20] #Save Packer Signature 
 		
-		ep_zzbuf3 = pyZZUF(self.PE_HEADER[self.EP+0x20:])	
-		rdata += ep_zzbuf3.mutate().tostring().decode() 
+		ep_zzuf3 = pyZZUF(self.PE_HEADER[self.EP+0x20:])	
+		ep_zzuf3.set_ratio(0.3)
+		rdata += ep_zzuf3.mutate().tostring().decode() 
 
 		return rdata
 
@@ -62,15 +66,18 @@ class PE_FUZZ(object):
 		
 		rdata += self.PE_HEADER[0x0:0x4] # Signature
 		
-		lfh_zzbuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
+		lfh_zzuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
+		lfh_zzuf.set_ratio(0.3)
 		rdata += lfh_zzuf.mutate().tostring().decode() # PE_HEADER 1 
 		
-		loh_zzbuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
+		loh_zzuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
+		loh_zzuf1.set_ratio(0.3)
 		rdata += loh_zzuf1.mutate().tostring().decode() # PE_HEADER 2
 		
 		rdata += struct.pack('<I',self.EP) # EP
 		
-		loh_zzbuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:])
+		loh_zzuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:])
+		loh_zzuf2.set_ratio(0.3)
 		rdata += loh_zzuf2.mutate().tostring().decode() # PE_HEADER 3 
 		
 		return rdata
