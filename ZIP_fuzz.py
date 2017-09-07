@@ -178,7 +178,9 @@ def main(seed_dir, out_dir, Filename):
         if (compressSize!=0):
             endCompSize = endExtraField + compressSize
             data = unpack(str(compressSize)+'B', fileContent[endExtraField:endCompSize])    
-    
+        
+        else:
+            exit(0)
         # no data descriptor
     
         # Central directory structure
