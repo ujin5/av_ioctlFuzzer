@@ -31,7 +31,6 @@ class OLE_FUZZ:
             ole = f.read()
 
         ole = ole[9:]
-        print ole
         ole = pyZZUF(ole)
         ole_write = ole.mutate()
         try:
