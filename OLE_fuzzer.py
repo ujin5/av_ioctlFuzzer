@@ -1,6 +1,5 @@
 from pyZZUF import *
 from random import choice
-import OleFileIO_PL
 import shutil
 import os
 
