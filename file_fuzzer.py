@@ -53,7 +53,7 @@ class Compress_FUZZ:
         CHECKSUM = self.INPUT[length-8:length-4]
         FILESIZE = self.INPUT[length-4:]
 
-        zzbuf = pyZZUF(self.INPUT[2:])
+        zzbuf = pyZZUF(self.INPUT[2:-8])
 
         rdata = ""
         rdata += SIGN
