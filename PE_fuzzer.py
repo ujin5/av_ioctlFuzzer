@@ -1,5 +1,5 @@
 from pyZZUF import *
-import fuzz_utils
+from fuzz_utils import *
 
 IMAGE_DOS_HEADER = 0x40
 IMAGE_FILE_HEADER =  0x4
@@ -23,9 +23,9 @@ class PE_FUZZ:
 
 		self.ParsePE()
 		if self.IS_PACKED:
-			rdata = PackMute()
+			rdata = self.PackMute()
 		else:
-			rdata = NonPackMute()
+			rdata = self.NonPackMute()
 		f = open(self.TARGET,'w')
 		f.write(rdata)
 
@@ -39,23 +39,23 @@ class PE_FUZZ:
 		
 		lfh_zzuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
 		lfh_zzuf.set_ratio(0.3)
-		rdata += lfh_zzuf.mutate().tostring().decode() # PE_HEADER 1 
+		rdata += lfh_zzuf.mutate().tostring() # PE_HEADER 1 
 		
 		loh_zzuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
 		loh_zzuf1.set_ratio(0.3)
-		rdata += loh_zzuf1.mutate().tostring().decode() # PE_HEADER 2
+		rdata += loh_zzuf1.mutate().tostring() # PE_HEADER 2
 		
 		rdata += struct.pack('<I',self.EP) # EP
 		
 		loh_zzuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:self.EP])
 		loh_zzuf2.set_ratio(0.3)
-		rdata += loh_zzuf2.mutate().tostring().decode() # PE_HEADER 3 
+		rdata += loh_zzuf2.mutate().tostring() # PE_HEADER 3 
 		
 		rdata += self.PE_HEADER[self.EP:self.EP+0x20] #Save Packer Signature 
 		
 		ep_zzuf3 = pyZZUF(self.PE_HEADER[self.EP+0x20:])	
 		ep_zzuf3.set_ratio(0.3)
-		rdata += ep_zzuf3.mutate().tostring().decode() 
+		rdata += ep_zzuf3.mutate().tostring() 
 
 		return rdata
 
@@ -69,24 +69,25 @@ class PE_FUZZ:
 		
 		lfh_zzuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
 		lfh_zzuf.set_ratio(0.3)
-		rdata += lfh_zzuf.mutate().tostring().decode() # PE_HEADER 1 
+		rdata += lfh_zzuf.mutate().tostring() # PE_HEADER 1 
 		
 		loh_zzuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
 		loh_zzuf1.set_ratio(0.3)
-		rdata += loh_zzuf1.mutate().tostring().decode() # PE_HEADER 2
+		rdata += loh_zzuf1.mutate().tostring() # PE_HEADER 2
 		
 		rdata += struct.pack('<I',self.EP) # EP
 		
 		loh_zzuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:])
 		loh_zzuf2.set_ratio(0.3)
-		rdata += loh_zzuf2.mutate().tostring().decode() # PE_HEADER 3 
+		rdata += loh_zzuf2.mutate().tostring() # PE_HEADER 3 
 		
 		return rdata
 	
 	def ParsePE(self):
 
-		with open(self.PATH,'r') as f:
+		with open(self.PATH,'rb') as f:
 			data = f.read()
+		print len(data)
 		self.DOS_HEADER = data[0x0:IMAGE_DOS_HEADER]
 		self.e_lfanew = toDWORD(self.DOS_HEADER[0x3C:0x40])
 		self.PE_HEADER = data[self.e_lfanew:]
@@ -94,7 +95,7 @@ class PE_FUZZ:
 		self.DATA = data
 	
 	def IsPacked(self):
-		if self.FILENAME.find("packed"):
+		if self.FILENAME.find("packed") != -1:
 			self.IS_PACKED = True 
 		else:
 			self.IS_PACKED = False

@@ -3,8 +3,8 @@ import OLE_fuzzer
 import PE_fuzzer
 import COMP_fuzzer
 
-seed_dir = "C:\\Users\\JungUn\\Desktop\\seedfolder\\"
-out_dir = "C:\\Users\\JungUn\\Desktop\\outfolder\\"
+seed_dir = "C:\\Users\\oujin\\Desktop\\av_ioctlFuzzer\\seedfolder\\"
+out_dir = "C:\\Users\\oujin\\Desktop\\av_ioctlFuzzer\\outfolder\\"
 
 OLE_list = ["hwp", "doc", "ppt", "xls"]
 PE_list = ["exe"]
