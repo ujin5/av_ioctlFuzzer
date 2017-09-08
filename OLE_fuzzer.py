@@ -7,11 +7,12 @@ import os
 class OLE_FUZZ:
 
     def __init__(self, seed_dir, out_dir, filename):
-        self.TARGET = out_dir + filename 
-
+        self.SEED_DIR = seed_dir
+        self.OUT_DIR = out_dir
+        self.FILENAME = filename
     def Mutation(self):
 
-        with open(self.TARGET, 'rb') as f:
+        with open(self.SEED_DIR + self.FILENAME, 'rb') as f:
             ole = f.read()
 
         ole = ole[8:]
@@ -20,18 +21,9 @@ class OLE_FUZZ:
         
         ole_write = ole.mutate().tostring()
         try:
-            with open(self.TARGET, 'wb') as f:
+            with open(self.OUT_DIR + self.FILENAME, 'wb') as f:
                 f.write(ole_write)
             return True
         except IOError as error:
             print error
             return False
-
-    def emptyTemp():
-        while len(os.listdir("out_dir")) != 0 :
-            for x in os.listdir("out_dir"):
-                try:
-                    os.remove(r"out_dir\%s" % x)
-                except:
-                    pass
-
