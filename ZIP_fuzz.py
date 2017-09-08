@@ -140,7 +140,6 @@ class CfileManag:
     
     def createFile(self, fileNameOut):
         with open(fileNameOut, mode='wb') as file:
-            print content
             writeContent = file.write(content)
 
 def main(seed_dir, out_dir, Filename):
