@@ -117,6 +117,7 @@ class file_fuzzer:
 			print "error"
 		else:
 			self.pid_ads = output.split("\n")[2].split(" ")[-1]
+			self.dbg_ads.attach(int(self.pid_ads,10))
 			self.dbg_ads.run()
 		print "running ads debugger"
 
