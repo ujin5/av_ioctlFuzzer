@@ -9,6 +9,7 @@ __status__ = 'Production'
 # http://caca.zoy.org/wiki/zzuf
 
 import sys
+import time
 
 from array import array
 from random import randint
@@ -91,7 +92,8 @@ class pyZZUFArray(array):
 class pyZZUF(object):
 
 	# Fuzz variables
-	_seed = DEFAULT_SEED # random seed <int> (default 0)
+	_seed = int(str(time.time()).replace(".", "")) # random seed <int> (default 0)
+	print _seed
 	_ratio = DEFAULT_RATIO # bit fuzzing ratio <float> (default 0.004)
 
 	# Offsets
@@ -114,9 +116,9 @@ class pyZZUF(object):
 	def __init__(self, buf, seed=None, ratio=None, offset=None):
 		super(pyZZUF, self).__init__()
 		self.set_buffer(buf)
-
+		self.set_seed(int(str(time.time()).replace(".", "")))
 		if seed is not None:
-			self.set_seed(seed)
+			self.set_seed(_seed)
 		if ratio is not None:
 			self.set_ratio(ratio)
 		if offset is not None:
