@@ -216,9 +216,6 @@ class file_fuzzer:
 			# 크래시 정보 로깅
 			crash_fd = open("crash\\crash-%d.log" % self.count,"w")
 			crash_fd.write(self.crash)
-			crash_fd.write("----------------- mutate log -------------------\n")
-			for i in self.mutate_list:
-				crash_fd.write("offset : "+ hex(i[0])+", 0x"+i[1] + "\n" )
 			crash_fd.close()
 
 			# 원본 파일을 백업한다.
