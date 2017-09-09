@@ -113,6 +113,33 @@ class file_fuzzer:
 			monitor_thread.start()
 
 			self.count +=1
+			if (self.count % 100) == 99:
+				time.sleep(3)
+				restart_thread = threading.Thread(target=self.restart_ASDsvc)
+				restart_thread.setDaemon(0)
+				restart_thread.start()
+				print "[*] Restart ASDsvc"
+				time.sleep(10)
+				os.system("taskkill /F /IM v3lite.exe")
+				pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc_debugger)
+				pydbg_ads_thread.setDaemon(0)
+				pydbg_ads_thread.start()
+
+
+	def restart_ASDsvc(self):	
+		os.system("taskkill /F /IM asdsvc.exe")
+		time.sleep(1)
+		os.system("taskkill /F /IM v3lite.exe")
+		time.sleep(2)
+		cmd = "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3Lite.exe\""
+		pipe = subprocess.Popen(cmd,
+		    shell=True,
+		    stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+		    stderr=subprocess.PIPE)
+		output, errors = pipe.communicate()
+		pipe.stdin.close()
+		
 
 	# 대상 어플리케이션을 실행시키는 디버거 쓰레드
 	def start_ASDsvc_debugger(self):
