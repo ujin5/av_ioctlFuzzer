@@ -53,8 +53,6 @@ class file_fuzzer:
 		output, errors = pipe.communicate()
 		pipe.stdin.close()
 		self.max = int(re.findall('\d+', output.split("\n")[-3])[0])
-		print self.max
-
 
 	# 파일 선택
 	def file_picker(self):
