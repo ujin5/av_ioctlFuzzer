@@ -13,6 +13,7 @@ import OLE_fuzzer
 import PE_fuzzer
 import COMP_fuzzer
 import subprocess
+import re
 
 class file_fuzzer:
 	def __init__(self, exe_path):
@@ -27,6 +28,7 @@ class file_fuzzer:
 		self.tmp_file			= None
 		self.tmp_dir			 = "C:\\fuzz\\temp"
 		self.count			   = 0
+		self.max			   = 0
 		self.crash			   = None
 		self.crash_tracking	  = False # 크래시 추적 활성화 체크
 		self.crash_count		 = None # 크래시 번호 저장
@@ -41,10 +43,24 @@ class file_fuzzer:
 		self.pid_ads			 = None
 		self.dbg_ads			 = None
 
+	def file_picker_setting(self):
+		cmd = "dir " + self.sample_dir
+		pipe = subprocess.Popen(cmd,
+		    shell=True,
+		    stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+		    stderr=subprocess.PIPE)
+		output, errors = pipe.communicate()
+		pipe.stdin.close()
+		self.max = int(re.findall('\d+', output.split("\n")[-3])[0])
+		print self.max
+
+
 	# 파일 선택
 	def file_picker(self):
 		file_list = os.listdir(self.sample_dir)
-		sel_file = random.choice(file_list)
+		file_num = self.count % self.max
+		sel_file = file_list[file_num]
 		self.tmp_file = self.tmp_dir+ sel_file
 		# print sel_file
 		# print self.tmp_file
@@ -54,6 +70,8 @@ class file_fuzzer:
 
 	def fuzz(self):
 		
+		self.file_picker_setting()
+
 		# 디버거 쓰레드 실행
 		pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc_debugger)
 		pydbg_ads_thread.setDaemon(0)
@@ -128,7 +146,6 @@ class file_fuzzer:
 		self.running = True
 		self.dbg = pydbg()
 
-		self.dbg.set_callback(EXCEPTION_ACCESS_VIOLATION,self.check_accessv)
 		pid = self.dbg.load(self.exe_path, "/manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1] )
 		# print self.exe_path + "/manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1]
 		self.pid = self.dbg.pid
@@ -172,11 +189,11 @@ class file_fuzzer:
 		if self.crash_tracking == False:
 
 			# 중복된 크래시 인지 체크
-			if self.dbg.context.Eip in self.eip_list:
+			if self.dbg_ads.context.Eip in self.eip_list:
 				print "\n[ x ] Duplicate Crash!!"
 				self.in_accessv_handler = False
-				self.dbg.terminate_process()
-				self.pid = None
+				self.dbg_ads.terminate_process()
+				self.pid_ads = None
 
 				return DBG_EXCEPTION_NOT_HANDLED
 
@@ -207,8 +224,8 @@ class file_fuzzer:
 			# 원본 파일을 백업한다.
 			shutil.copy(self.orig_file,"crash\\%d_orig%s" % (self.count,self.ext))
 
-			self.dbg.terminate_process()
-			self.pid = None
+			self.dbg_ads.terminate_process()
+			self.pid_ads = None
 
 			return DBG_EXCEPTION_NOT_HANDLED
 
@@ -271,21 +288,21 @@ class file_fuzzer:
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\", self.orig_file.split("\\")[-1])
+		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
 		  fuzzer.Mutation()
 		   
 		if(ext in PE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\", self.orig_file.split("\\")[-1])
+		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
 		  fuzzer.Mutation()
 
 		if(ext in OLE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\", self.orig_file.split("\\")[-1])
+		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
 		  fuzzer.Mutation()
 		print "[*] Fin Fuzz"
 
