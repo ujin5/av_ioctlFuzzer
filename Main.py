@@ -66,7 +66,7 @@ class file_fuzzer:
 	def file_picker(self):
 		file_list = os.listdir(self.sample_dir)
 		file_num = self.count % self.max
-		sel_file = str(time.time()).replace(".", "") + "-" + str(file_num) + "_" + file_list[file_num]
+		sel_file = str(time.time()).replace(".", "") + "-" + str(file_num) + "-" + file_list[file_num]
 		self.tmp_file = self.tmp_dir + "\\" + sel_file
 		self.orig_file = self.sample_dir + "\\" + file_list[file_num]
 		## shutil.copy(self.orig_file,  self.tmp_file)
@@ -177,13 +177,13 @@ class file_fuzzer:
 			pydbg_thread.setDaemon(0)
 			pydbg_thread.start()
 
-			'''
+			
 			# Attack ASDsvc.exe
 			if self.count == 5:
 				attack_thread = threading.Thread(target=self.attack_debugger)
 				attack_thread.setDaemon(0)
 				attack_thread.start()
-			'''
+			
 
 			while self.running_cra:
 				time.sleep(1)
@@ -280,6 +280,7 @@ class file_fuzzer:
 
 		while True :
 			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_file
+			print cmd
 			pipe = self.wincmd(cmd)
 			pipe.stdin.close()
 			cmd = "tasklist /FI \"IMAGENAME eq v3lmedic.exe\" /FO LIST"
@@ -326,23 +327,24 @@ class file_fuzzer:
 		
 		if(ext in COMP_list):
 		  #print self.sample_dir
-		  #print self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0]
-		  #print self.tmp_file.split("_")[-1]
-		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
+		  #print self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0]
+		  #print self.tmp_file
+		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 		   
 		if(ext in PE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
-		  #print self.orig_file
-		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
+		  #print self.orig_filee
+		  print self.tmp_file
+		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 
 		if(ext in OLE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
+		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 		print "[*] Fin Fuzz"
 
