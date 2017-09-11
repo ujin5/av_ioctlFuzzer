@@ -279,7 +279,7 @@ class file_fuzzer:
 		self.running = True
 
 		while True :
-			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1]
+			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_file
 			pipe = self.wincmd(cmd)
 			pipe.stdin.close()
 			cmd = "tasklist /FI \"IMAGENAME eq v3lmedic.exe\" /FO LIST"
