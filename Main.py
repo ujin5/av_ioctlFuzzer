@@ -280,7 +280,7 @@ class file_fuzzer:
 
 		while True :
 			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_file
-			print cmd
+			# print cmd
 			pipe = self.wincmd(cmd)
 			pipe.stdin.close()
 			cmd = "tasklist /FI \"IMAGENAME eq v3lmedic.exe\" /FO LIST"
@@ -336,7 +336,7 @@ class file_fuzzer:
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_filee
-		  print self.tmp_file
+		  #print self.tmp_file
 		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 
