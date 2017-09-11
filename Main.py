@@ -177,13 +177,13 @@ class file_fuzzer:
 			pydbg_thread.setDaemon(0)
 			pydbg_thread.start()
 
-			
+			'''
 			# Attack ASDsvc.exe
 			if self.count == 5:
 				attack_thread = threading.Thread(target=self.attack_debugger)
 				attack_thread.setDaemon(0)
 				attack_thread.start()
-			
+			'''
 
 			while self.running_cra:
 				time.sleep(1)
