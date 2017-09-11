@@ -15,6 +15,8 @@ import COMP_fuzzer
 import subprocess
 import re
 
+
+
 class file_fuzzer:
 	def __init__(self, exe_path):
 		self.mutate_count		= 100
@@ -22,7 +24,6 @@ class file_fuzzer:
 		self.selected_list	   = [] # 크래시 트래킹에 사용할 리스트
 		self.eip_list			= []	#크래시 중복체크 (EIP 기준)
 		self.exe_path			= exe_path
-		self.ext				 = ".hwp"
 		self.orig_file		   = None
 		self.sample_dir		  = "C:\\fuzz\\in"
 		self.tmp_file			= None
@@ -38,18 +39,25 @@ class file_fuzzer:
 		self.in_accessv_handler  = False
 		self.dbg				 = None
 		self.running			 = False
-
+		self.filename			= ""
+		self.ord_ads			= False
+		self.pid_exe			 = None
+		self.running_v3			= False
 		self.running_ads		 = False
+		self.running_cra		= False
 		self.pid_ads			 = None
 		self.dbg_ads			 = None
 
+	def wincmd(self, cmd):
+		return subprocess.Popen(cmd,
+			shell=True,
+			stdin=subprocess.PIPE,
+			stdout=subprocess.PIPE,
+			stderr=subprocess.PIPE)
+
 	def file_picker_setting(self):
 		cmd = "dir " + self.sample_dir
-		pipe = subprocess.Popen(cmd,
-		    shell=True,
-		    stdin=subprocess.PIPE,
-			stdout=subprocess.PIPE,
-		    stderr=subprocess.PIPE)
+		pipe = self.wincmd(cmd)
 		output, errors = pipe.communicate()
 		pipe.stdin.close()
 		self.max = int(re.findall('\d+', output.split("\n")[-3])[0])
@@ -58,34 +66,106 @@ class file_fuzzer:
 	def file_picker(self):
 		file_list = os.listdir(self.sample_dir)
 		file_num = self.count % self.max
-		sel_file = file_list[file_num]
-		self.tmp_file = self.tmp_dir+ sel_file
-		# print sel_file
-		# print self.tmp_file
-		self.orig_file = self.sample_dir + "\\" +sel_file
+		sel_file = str(time.time()).replace(".", "") + "-" + str(file_num) + "_" + file_list[file_num]
+		self.tmp_file = self.tmp_dir + "\\" + sel_file
+		self.orig_file = self.sample_dir + "\\" + file_list[file_num]
 		## shutil.copy(self.orig_file,  self.tmp_file)
 		return
+
+	# 에러를 추적하고 정보를 저장하기 위한 접근 위반 핸들러 
+	def handler_access_violation(self, pydbg):
+
+		self.running_cra = True
+
+		print "\n[-] Access_violation Crash!!\n"
+		print "[-] Woot! Handling an access violation!"
+		print "[-] EIP : 0x%08x" % self.dbg_ads.context.Eip
+
+		# eip 리스트에 추가
+		self.eip_list.append(self.dbg_ads.context.Eip)
+
+		# 트래킹 활성화
+		# self.crash_tracking = True
+		# self.in_accessv_handler = True
+
+		crash_bin = utils.crash_binning.crash_binning()
+		crash_bin.record_crash(self.dbg_ads)
+		self.crash = crash_bin.crash_synopsis()
+
+		# 크래시 일 때 카운트정보를 작성한다.
+		self.crash_count = self.count
+
+		# 크래시 정보 로깅
+		crash_fd = open("C:\\fuzz\\crash\\" + self.tmp_file.split("\\")[-1] + "-%d.log" % self.count,"w")
+		crash_fd.write(self.crash)
+		crash_fd.close()
+		
+		# 원본 파일을 백업한다.
+		shutil.copy(self.tmp_file, "C:\\fuzz\\crash\\" + self.tmp_file.split("\\")[-1].split(".")[0] + "-" + str(self.count) + "." + self.tmp_file.split(".")[-1] )
+
+		self.dbg_ads.terminate_process()
+		self.dbg_ads.close_handle(self.dbg_ads.h_process)
+		self.dbg_ads.detach()
+		self.pid_ads = None
+		self.running_ads = False
+
+		print "[*] Restart ASDsvc"
+
+		self.running_ads = False
+		restart_thread = threading.Thread(target=self.kill_ASDsvc)
+		restart_thread.setDaemon(0)
+		restart_thread.start()
+
+		while self.running_ads == False:
+			while self.running_v3 == False:
+				time.sleep(0.5)
+			time.sleep(10)
+			print "kill v3"
+			os.system("taskkill /F /IM v3lite.exe")		
+			time.sleep(2)
+		print "finzzzz"
+
+		pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc_debugger)
+		pydbg_ads_thread.setDaemon(0)
+		pydbg_ads_thread.start()
+
+		print "[-]Fin save crash & restart ASDsvc"
+
+		self.running_cra = False
+		self.running = False
+
+		return DBG_EXCEPTION_NOT_HANDLED
+
 
 	def fuzz(self):
 		
 		self.file_picker_setting()
 
-		# 디버거 쓰레드 실행
-		pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc_debugger)
-		pydbg_ads_thread.setDaemon(0)
-		pydbg_ads_thread.start()
+		# adssvc.exe에 디버거
+		debugger_thread = threading.Thread(target=self.start_ASDsvc_debugger)
+		debugger_thread.setDaemon(0)
+		debugger_thread.start()
+
+
 
 		while self.pid_ads == None:
 			time.sleep(0.5)
-
 		while 1:
+			self.count +=1
 
-			while self.running :
+			while self.running or self.running_cra:
 				time.sleep(1)
 
+			# Attack ASDsvc.exe
+			'''
+			if self.count == 5:
+				attack_thread = threading.Thread(target=self.attack_debugger)
+				attack_thread.setDaemon(0)
+				attack_thread.start()
+			'''
 			self.running = True
 
-			print "[*] Starting debugger for iteration: %d" % self.count
+			print "[*] Starting Antivirus for iteration: %d" % self.count
 
 			# 크래시 추적 활성화 여부 체크
 			if self.crash_tracking == False:
@@ -99,204 +179,138 @@ class file_fuzzer:
 				# 트래킹하는 뮤테이션 함수 호출
 				self.mutate_track()
 
-			# 디버거 쓰레드 실행
-			pydbg_thread = threading.Thread(target=self.start_debugger)
+			# 실행파일 쓰레드 실행
+			pydbg_thread = threading.Thread(target=self.start_exe)
 			pydbg_thread.setDaemon(0)
 			pydbg_thread.start()
 
-			while self.pid == None:
-				time.sleep(0.5)
-
 			# 모니터링 쓰레드 실행
-			monitor_thread = threading.Thread(target=self.monitor_debugger)
+			monitor_thread = threading.Thread(target=self.monitor_exe)
 			monitor_thread.setDaemon(0)
 			monitor_thread.start()
 
-			self.count +=1
-			if (self.count % 100) == 99:
-				time.sleep(3)
-				restart_thread = threading.Thread(target=self.restart_ASDsvc)
+			if (self.count % 3) == 2:
+				time.sleep(5)
+
+				print "[*] Restart ASDsvc"
+
+				self.running_ads = False
+				restart_thread = threading.Thread(target=self.kill_ASDsvc)
 				restart_thread.setDaemon(0)
 				restart_thread.start()
-				print "[*] Restart ASDsvc"
-				time.sleep(10)
-				os.system("taskkill /F /IM v3lite.exe")
+
+				while self.running_ads == False:
+					while self.running_v3 == False:
+						time.sleep(0.5)
+					time.sleep(10)
+					os.system("taskkill /F /IM v3lite.exe")		
+					time.sleep(2)		
+
 				pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc_debugger)
 				pydbg_ads_thread.setDaemon(0)
 				pydbg_ads_thread.start()
 
 
-	def restart_ASDsvc(self):	
-		os.system("taskkill /F /IM asdsvc.exe")
-		time.sleep(1)
-		os.system("taskkill /F /IM v3lite.exe")
-		time.sleep(2)
-		cmd = "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3Lite.exe\""
-		pipe = subprocess.Popen(cmd,
-		    shell=True,
-		    stdin=subprocess.PIPE,
-			stdout=subprocess.PIPE,
-		    stderr=subprocess.PIPE)
-		output, errors = pipe.communicate()
-		pipe.stdin.close()
+
+	def kill_ASDsvc(self):
+		print "[-] Start to kill process"
+		while True:
+			self.running_v3 = False
+			os.system("taskkill /F /IM v3lmedic.exe")
+			time.sleep(0.5)
+			os.system("taskkill /F /IM asdsvc.exe")
+			time.sleep(0.5)
+			os.system("taskkill /F /IM v3lite.exe")
+			time.sleep(3)
+			self.running_v3 = True
+			os.system( "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3Lite.exe\"" )
+			cmd = "tasklist /FI \"IMAGENAME eq v3lite.exe\" /FO LIST"
+			pipe = self.wincmd(cmd)
+			output1, errors1 = pipe.communicate()
+			pipe.stdin.close()
+			cmd = "tasklist /FI \"IMAGENAME eq asdsvc.exe\" /FO LIST"
+			pipe = self.wincmd(cmd)
+			output2, errors2 = pipe.communicate()
+			pipe.stdin.close()
+			if output2.split("\n")[0].encode("hex") == "0d":
+				self.running_ads = True
+				break;
 		
 
 	# 대상 어플리케이션을 실행시키는 디버거 쓰레드
 	def start_ASDsvc_debugger(self):
-
 		self.running_ads = True
 		self.dbg_ads = pydbg()
-
-		self.dbg_ads.set_callback(EXCEPTION_ACCESS_VIOLATION,self.check_accessv)
 		cmd = "tasklist /FI \"IMAGENAME eq asdsvc.exe\" /FO LIST"
-		pipe = subprocess.Popen(cmd,
-		    shell=True,
-		    stdin=subprocess.PIPE,
-			stdout=subprocess.PIPE,
-		    stderr=subprocess.PIPE)
+		pipe = self.wincmd(cmd)
 		output, errors = pipe.communicate()
 		pipe.stdin.close()
 		if errors != "":
-			print "error"
+			print "[-] Error on start"
 		else:
 			self.pid_ads = output.split("\n")[2].split(" ")[-1]
+			self.dbg_ads.set_callback(EXCEPTION_ACCESS_VIOLATION, self.handler_access_violation ) 
 			self.dbg_ads.attach(int(self.pid_ads,10))
+			print "[+] Attach debugger to ASDsvc : " + str(self.pid_ads)
 			self.dbg_ads.run()
-		print "running ads debugger"
 
+	def attack_debugger(self):
+		print "[!] Start attack : " + str( self.dbg_ads.pid )
+		# self.dbg_ads.suspend_all_threads()
+		for thread_id in self.dbg_ads.enumerate_threads():
+			thread_handle  = self.dbg_ads.open_thread(thread_id)
+			thread_context = self.dbg_ads.get_thread_context(thread_handle)
+			# print "Eip = 0x%08x" % thread_context.Eip
+			thread_context.Eip=0xdeadbeef
+			self.dbg_ads.set_thread_context(thread_context,0,thread_id)
+			thread_context = self.dbg_ads.get_thread_context(thread_handle)
+			# print "new Eip = 0x%08x" % thread_context.Eip
+		# self.dbg_ads.resume_all_threads()
+		# pydbg.debug_event_loop(self.dbg_ads)
+		print "[!] Fin attack : "
 
-	# 대상 어플리케이션을 실행시키는 디버거 쓰레드
-	def start_debugger(self):
+	# 대상 어플리케이션을 실행
+	def start_exe(self):
 
 		self.running = True
-		self.dbg = pydbg()
 
-		pid = self.dbg.load(self.exe_path, "/manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1] )
-		# print self.exe_path + "/manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1]
-		self.pid = self.dbg.pid
-		self.dbg.run()
+		while True :
+			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_dir + "\\" + self.orig_file.split("\\")[-1]
+			pipe = self.wincmd(cmd)
+			pipe.stdin.close()
+			cmd = "tasklist /FI \"IMAGENAME eq v3lmedic.exe\" /FO LIST"
+			pipe = self.wincmd(cmd)
+			output, errors = pipe.communicate()
+			pipe.stdin.close()
+			if errors == "":
+				self.pid_exe = output.split("\n")[2].split(" ")[-1]
+				break
+			else:
+				print "no medic"
 
-	# 어플레킹션을 몇 초 동안 실행 되게 한 다음 종료시키는 모니터링 쓰레드 
-	def monitor_debugger(self):
+
+		# 어플레킹션을 몇 초 동안 실행 되게 한 다음 종료시키는 모니터링 쓰레드 
+	def monitor_exe(self):
+
+		while self.pid_exe == None:
+			time.sleep(0.5)
 
 		counter = 0
 		print "[*] waiting ",
-		while counter < 3 and self.pid != None:
+		while counter < 3 and self.pid_exe != None:
 			time.sleep(1)
 			print ".",
 			counter += 1
 		print "\n"
 
-		if self.in_accessv_handler != True:
-			tid = c_ulong(0)
-			if windll.kernel32.GetHandleInformation(self.dbg.h_process, byref(tid)) :
-				self.dbg.terminate_process()
-			self.dbg.close_handle(self.dbg.h_process)
-			
-		else:
-			while self.pid != None:
-				time.sleep(0.5)
+		#if self.in_accessv_handler != True:
+		os.system("taskkill /F /IM v3lmedic.exe")
+		#else:
+		#	while self.pid_exe != None:
+		#		time.sleep(0.5)
 		
-		while True :
-			try :
-				#os.remove(self.tmp_file)
-				break
-			except :
-				time.sleep(0.2)
 		self.in_accessv_handler = False
 		self.running = False
-
-
-	# 에러를 추적하고 정보를 저장하기 위한 접근 위반 핸들러 
-	def check_accessv(self, dbg):
-		
-		# 트래킹 활성화 여부 체크
-		if self.crash_tracking == False:
-
-			# 중복된 크래시 인지 체크
-			if self.dbg_ads.context.Eip in self.eip_list:
-				print "\n[ x ] Duplicate Crash!!"
-				self.in_accessv_handler = False
-				self.dbg_ads.terminate_process()
-				self.pid_ads = None
-
-				return DBG_EXCEPTION_NOT_HANDLED
-
-			# eip 리스트에 추가
-			self.eip_list.append(self.dbg.context.Eip)
-
-			# 트래킹 활성화
-			self.crash_tracking = True
-			self.in_accessv_handler = True
-			
-			print "\n[*] Woot! Handling an access violation!"
-			print "[*] EIP : 0x%08x" % self.dbg.context.Eip
-			
-			crash_bin = utils.crash_binning.crash_binning()
-			crash_bin.record_crash(dbg)
-			self.crash = crash_bin.crash_synopsis()
-
-			# 크래시 일 때 카운트정보를 작성한다.
-			self.crash_count = self.count
-			# 크래시 정보 로깅
-			crash_fd = open("crash\\crash-%d.log" % self.count,"w")
-			crash_fd.write(self.crash)
-			crash_fd.close()
-
-			# 원본 파일을 백업한다.
-			shutil.copy(self.orig_file,"crash\\%d_orig%s" % (self.count,self.ext))
-
-			self.dbg_ads.terminate_process()
-			self.pid_ads = None
-
-			return DBG_EXCEPTION_NOT_HANDLED
-
-		# 트래킹 활성화 시 수행할 루틴 
-		else:
-			
-			#접근위반 핸들러 활성화
-			self.in_accessv_handler = True
-			self.dbg.terminate_process()
-			self.pid = None
-			
-			print "[+] crash Again!!"
-			# 크래시 난 리스트를 뮤테이션 리스트에 넣는다.
-			self.mutate_list = self.selected_list
-			
-			# 크래시가 나면 새로운 피봇 설정
-			# self.pivot = self.mutate_list.index(random.choice(self.mutate_list))
-			
-			# 피봇이 처음이거나 끝이면 다시 설정
-			# if self.pivot == 0 or self.pivot == len(self.mutate_list)-1:
-			#	self.pivot = self.mutate_list.index(random.choice(self.mutate_list))
-				
-			self.check = False
-
-			print "[+] Mutate list count -- %d" % len(self.mutate_list)
-
-			 # 뮤테이션 리스트 원소의 갯수가 5개보다 적으면 수행 할 루틴
-			if len(self.mutate_list) == 1:
-				print "[ ^^ ] tracking Finished! %d -> %d" % (self.mutate_count, len(self.mutate_list))
-				# 크래시 파일 백업
-				shutil.copy(self.tmp_file, "crash\\crash_%d%s" % (self.crash_count,self.ext))
-
-				# 로그 추가 기록
-				f = open("crash\\crash_%d.log" % self.crash_count, 'a')
-				f.write("\n\n---------------- Check this Offset!! ------------------\n\n")
-				for i in self.mutate_list:
-					f.write("offset : "+ hex(i[0])+", 0x"+i[1] + "\n" )
-				f.write("\n\nEND")
-				f.close()
-
-				# 각종 변수 초기화
-				self.crash_tracking = False
-				self.crash_again = False
-				self.crash_tracking_step = 0
-				self.selected_list = []
-				self.pivot = 0
-
-			return DBG_EXCEPTION_NOT_HANDLED
-
 
 	def mutate_file( self ):
 		OLE_list = ["hwp", "doc", "ppt", "xls"]
@@ -305,113 +319,41 @@ class file_fuzzer:
 
 		print "[*] Selected file : %s" % self.orig_file
 		ext = self.orig_file.split(".")[-1]
-
+		
 		if(ext in COMP_list):
 		  #print self.sample_dir
-		  #print self.tmp_dir
-		  #print self.orig_file
-		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
+		  #print self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0]
+		  #print self.tmp_file.split("_")[-1]
+		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
 		  fuzzer.Mutation()
 		   
 		if(ext in PE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
+		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
 		  fuzzer.Mutation()
 
 		if(ext in OLE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
-		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir+ "\\", self.tmp_dir+ "\\" + str(time.time()).replace(".", "") + "-", self.orig_file.split("\\")[-1])
+		  fuzzer = OLE_fuzzer.OLE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("_")[0] + "_" , self.tmp_file.split("_")[-1])
 		  fuzzer.Mutation()
 		print "[*] Fin Fuzz"
 
-	  # cmd = "call " + "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe\" /manual_scan /target:" + self.orig_file
-	  # pipe = subprocess.Popen(cmd,
-	  #   shell=True,
-	  #   stdin=subprocess.PIPE,
-	  #   stdout=subprocess.PIPE,
-	  #   stderr=subprocess.PIPE)
-	  # pipe.stdin.close()
-	  # time.sleep(2)
 		return
 
-	def mutate_track( self ):
-		"""
-		# 트래킹이 처음 스탭일때(0) 수행
-		if self.crash_tracking_step == 0:
-			# 트래킹 카운트 초기화
-			self.tracking_count = 0
-			# 랜덤한 피봇 설정
-			self.pivot= self.mutate_list.index(random.choice(self.mutate_list))
-			# 피봇이 처음이거나 끝이면 다시 설정
-			if self.pivot == 0 or self.pivot == len(self.mutate_list)-1:
-				self.pivot = self.mutate_list.index(random.choice(self.mutate_list))
-			# 트래킹 스탭 1로 설정
-			self.crash_tracking_step = 1
-		"""
-		# 트래킹하는 카운트 증가
-		self.tracking_count+=1
-			
-		pivot = len(self.mutate_list)/2
-
-		# 트래킹 카운트가 비 정상이면 강제 종료(무한루프 방지)
-		if self.tracking_count > 20:
-			print "[T.T] tracking Fail... re-Try!"
-			self.crash_tracking = False
-			self.selected_list = []
-			self.tracking_count = 0
-			#eip 리스트를 비운다. (pop을 할까?)
-			self.eip_list = []
-			#트래킹 실패한 파일 삭제
-			os.remove("crash\\%d_orig.hwp" % self.crash_count)
-			os.remove("crash\\crash-%d.log" % self.crash_count)
-			return
-		
-		# 피봇을 기준으로 좌우로 나눈다.
-		left = self.mutate_list[:pivot]
-		right = self.mutate_list[pivot:]
-
-		# 리스트 선택
-		if self.check == False:
-			print "left"
-			self.selected_list = left
-			#체크 변수 토글
-			self.check = True
-		else:
-			print "right"
-			self.selected_list = right
-			#체크 변수 토글
-			self.check = False
-			
-		# 수정할 파일 오픈 
-		f = open(self.tmp_file, 'r+b')
-		
-		#tmp 파일에 쓰기
-		for i in self.selected_list:
-			#print i[0], i[1]
-			f.seek(i[0])
-			f.write(chr(int(i[1][:2],16)) * (len(i[1])/2))
-		f.close()
-
-
-		
-		return
 
 if __name__ == "__main__":
 
-  cmd = "mkdir C:\\fuzz\\in"
-  os.system( cmd )
-  cmd = "mkdir C:\\fuzz\\temp"
-  os.system( cmd )
+	os.system( "mkdir C:\\fuzz\\in C:\\fuzz\\temp C:\\fuzz\\crash" )
 
-  print "[*] File Fuzzer."
-  exe_path = ("C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe")
+	print "[*] File Fuzzer."
+	exe_path = ("C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe")
 		
-  if exe_path is not None:
-	fuzzer = file_fuzzer( exe_path)
-	fuzzer.fuzz()
-  else:
-	"[+] Error!"
+	if exe_path is not None:
+		fuzzer = file_fuzzer( exe_path)
+		fuzzer.fuzz()
+	else:
+		"[+] Error!"
