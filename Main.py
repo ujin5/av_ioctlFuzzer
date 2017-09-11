@@ -156,13 +156,6 @@ class file_fuzzer:
 			while self.running or self.running_cra:
 				time.sleep(1)
 
-			# Attack ASDsvc.exe
-			'''
-			if self.count == 5:
-				attack_thread = threading.Thread(target=self.attack_debugger)
-				attack_thread.setDaemon(0)
-				attack_thread.start()
-			'''
 			self.running = True
 
 			print "[*] Starting Antivirus for iteration: %d" % self.count
@@ -184,12 +177,23 @@ class file_fuzzer:
 			pydbg_thread.setDaemon(0)
 			pydbg_thread.start()
 
+			'''
+			# Attack ASDsvc.exe
+			if self.count == 5:
+				attack_thread = threading.Thread(target=self.attack_debugger)
+				attack_thread.setDaemon(0)
+				attack_thread.start()
+			'''
+
+			while self.running_cra:
+				time.sleep(1)
+			
 			# 모니터링 쓰레드 실행
 			monitor_thread = threading.Thread(target=self.monitor_exe)
 			monitor_thread.setDaemon(0)
 			monitor_thread.start()
 
-			if (self.count % 3) == 2:
+			if (self.count % 100) == 99:
 				time.sleep(5)
 
 				print "[*] Restart ASDsvc"
