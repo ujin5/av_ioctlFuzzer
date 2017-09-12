@@ -90,7 +90,7 @@ class COMP_FUZZ:
         THIRD_SIGN = chr(0x50) + chr(0x4b) + chr(0x05) + chr(0x06)
         
         FIRST_SECTION = self.INPUT[:self.INPUT.find(SECOND_SIGN)]
-        SECOND_SECTION = self.INPUT[self.INPUT.find(SECONDE_SIGN) : self.INPUT.find(THIRD_SIGN)]
+        SECOND_SECTION = self.INPUT[self.INPUT.find(SECOND_SIGN) : self.INPUT.find(THIRD_SIGN)]
         THIRD_SECTION = self.INPUT[self.INPUT.find(THIRD_SIGN):]
 
         fileCNT = FIRST_SECTION.count(FIRST_SECTION)
