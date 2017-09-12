@@ -39,28 +39,88 @@ class COMP_FUZZ:
         if(self.new_data != None):       
             f = open(self.OUT_DIR + self.FILENAME, "wb")
             f.write(self.new_data)
+      
+    def zip_FIRST_HEADER(self, data):
+
+        SIGN = data[:4]
         
+        rdata = ""
+        rdata += SIGN
+        rdata += pyZZUF(data[4:8]).mutate().tostring()     #frversion & flags
+        rdata += data[8:10]
+        rdata += pyZZUF(data[10:26]).mutate().tostring()
+        rdata += data[26:]        
+    
+        return rdata
+
+    def zip_SECOND_HEADER(self,data):
+
+        SIGN = data[:4]
+
+        rdata = ""
+        rdata += SIGN
+        rdata += pyZZUF(data[4:10]).mutate().tostring()
+        rdata += data[10:12]
+        rdata += pyZZUF(data[12:16]).mutate().tostring()
+        rdata += data[16:34]        # decrc, decompressed size, filename length, etc.
+        rdata += pyZZUF(data[34:42]).mutate().tostring()
+        rdata += data[42:46]
+        rdata += pyZZUF(data[46:]).mutate().tostring()
+
+        return rdata
+
+    def zip_THIRD_HEADER(self, data):
+
+        SIGN = data[:4]
+
+        rdata = ""
+        rdata += SIGN
+        rdata += data[4:6]
+        rdata += pyZZUF(data[6:16]).mutate().tostring()
+        rdata += data[16:]
+
+        return rdata
+
     def zip_fuzz(self):
         
-        file_path = self.SEED_DIR + self.FILENAME
-        return ZIP_fuzz.main(self.SEED_DIR, self.OUT_DIR, self.FILENAME)
+        length = len(self.INPUT)
+        
+        FIRST_SIGN = chr(0x50) + chr(0x4b) + chr(0x03) + chr(0x04)
+        SECOND_SIGN = chr(0x50) + chr(0x4b) + chr(0x01) + chr(0x02)
+        THIRD_SIGN = chr(0x50) + chr(0x4b) + chr(0x05) + chr(0x06)
+        
+        FIRST_SECTION = self.INPUT[:self.INPUT.find(SECOND_SIGN)]
+        SECOND_SECTION = self.INPUT[self.INPUT.find(SECONDE_SIGN) : self.INPUT.find(THIRD_SIGN)]
+        THIRD_SECTION = self.INPUT[self.INPUT.find(THIRD_SIGN):]
+
+        fileCNT = FIRST_SECTION.count(FIRST_SECTION)
+
+        rdata = "" 
+
+        for i in range(fileCNT):
+            rdata += zip_FIRST_HEADER(FIRST_SIGN + FIRST_SECTION.split(FIRST_SIGN)[i+1])
+
+        for i in range(fileCNT):
+            rdata += zip_SECOND_HEADER(SECOND_SIGN + SECOND_SECTION.split(SECOND_SIGN)[i+1])
+
+        rdata += zip_THIRD_HEADER(THIRD_SECTION)
+
         
 
     def gzip_fuzz(self):
         
-        length = len(self.INPUT)
         SIGN = self.INPUT[:2]
         CHECKSUM = self.INPUT[length-8:length-4]
         FILESIZE = self.INPUT[length-4:]
 
-        zzbuf = pyZZUF(self.INPUT[2:])
-        zzbuf.set_ratio(0.3)
-
         rdata = ""
         rdata += SIGN
-        rdata += zzbuf.mutate().tostring()
+        rdata += self.INPUT[2:4]    # compression method & flag
+        rdata += pyZZUF(self.INPUT[4:10]).mutate().tostring()
+        rdata += self.INPUT[10:length-8]
         rdata += CHECKSUM
-        rdata += FILESIZE
+        rdata += pyZZUF(FILESIZE[:2]).mutate().tostring()   # upper 2 bytes
+        rdata += FILESIZE[2:]
 
         return rdata    
 
@@ -69,8 +129,7 @@ class COMP_FUZZ:
         SIGN = self.INPUT[:6]
 
         zzbuf = pyZZUF(self.INPUT[6:])
-        zzbuf.set_ratio(0.3)
-
+    
         rdata = ""
         rdata += SIGN
         rdata += zzbuf.mutate().tostring()
@@ -80,55 +139,19 @@ class COMP_FUZZ:
 
     def rar_fuzz(self):
     
-        SIGN = self.INPUT[:0x5]
-        HEADER_SIZE = self.INPUT[0x5:0x7]
-        FILE_CHECKSUM = self.INPUT[0x24:0x28]
-        BHEADER_SIZE = self.INPUT[0x19:0x1b]
-        HEAD_TYPE1 = chr(0x73)
-        HEAD_TYPE2 = chr(0x74)
+        FIRST_HEADER = self.INPUT[:0x7]
+        
+        ARC_HEADER = pyZZUF(self.INPUT[0x7:0x9]).mutate().tostring()
+        ARC_HEADER += INPUT[0x9:0xE]
+        ARC_HEADER += pyZZUF(INPUT[0xE:0x14]).mutate().tostring()
 
-        fuzzed_data = pyZZUF(self.INPUT)
-        fuzzed_data.set_ratio(0.3)
-        fuzzed_data = fuzzed_data.mutate().tostring()
-
+        LAST_HEADER = self.INPUT[-7:]
+        
         rdata = ""
-        rdata += SIGN
+        rdata += FIRST_SECTION
+        rdata += ARC_HEADER
         rdata += HEADER_SIZE
+        rdata += self.INPUT[0x14:-7]
+        rdata += LAST_HEADER
         
-        tmp_data = HEAD_TYPE1
-        tmp_data += fuzzed_data[0xa:0x14]
-
-        HEADER_CRC = zlib.crc32(tmp_data) & 0xffffffff
-        rdata += chr(HEADER_CRC & 0xff)
-        rdata += chr((HEADER_CRC >> 8) & 0xff)
-        rdata += tmp_data
-        
-        size = ord(BHEADER_SIZE[0]) + 0xff * ord(BHEADER_SIZE[1])
-        tmp_data = HEAD_TYPE2
-        tmp_data += fuzzed_data[0x17:0x19]
-        tmp_data += BHEADER_SIZE
-        tmp_data += fuzzed_data[0x1b:0x24]
-        tmp_data += FILE_CHECKSUM
-        tmp_data += fuzzed_data[0x28:0x14+size]
-        
-        BHEADER_CRC = zlib.crc32(tmp_data) & 0xffffffff
-        
-        rdata += chr(BHEADER_CRC & 0xff)
-        rdata += chr((BHEADER_CRC >> 8) & 0xff)
-        rdata += tmp_data
-        
-        rdata += fuzzed_data[0x14+size:-7]
-        
-        END_CRC = self.INPUT[-7:]
-        rdata += END_CRC
-         
         return rdata
-
-    
-
-
-
-
-    
-    
-    
