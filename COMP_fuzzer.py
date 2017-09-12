@@ -103,7 +103,7 @@ class COMP_FUZZ:
         for i in range(fileCNT):
             rdata += self.zip_SECOND_HEADER(SECOND_SIGN + SECOND_SECTION.split(SECOND_SIGN)[i+1])
 
-        rdata += zip_THIRD_HEADER(THIRD_SECTION)
+        rdata += self.zip_THIRD_HEADER(THIRD_SECTION)
 
         return rdata
 
