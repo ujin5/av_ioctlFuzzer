@@ -150,7 +150,6 @@ class COMP_FUZZ:
         rdata = ""
         rdata += FIRST_SECTION
         rdata += ARC_HEADER
-        rdata += HEADER_SIZE
         rdata += self.INPUT[0x14:-7]
         rdata += LAST_HEADER
         
