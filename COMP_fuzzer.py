@@ -98,10 +98,10 @@ class COMP_FUZZ:
         rdata = "" 
 
         for i in range(fileCNT):
-            rdata += zip_FIRST_HEADER(FIRST_SIGN + FIRST_SECTION.split(FIRST_SIGN)[i+1])
+            rdata += self.zip_FIRST_HEADER(FIRST_SIGN + FIRST_SECTION.split(FIRST_SIGN)[i+1])
 
         for i in range(fileCNT):
-            rdata += zip_SECOND_HEADER(SECOND_SIGN + SECOND_SECTION.split(SECOND_SIGN)[i+1])
+            rdata += self.zip_SECOND_HEADER(SECOND_SIGN + SECOND_SECTION.split(SECOND_SIGN)[i+1])
 
         rdata += zip_THIRD_HEADER(THIRD_SECTION)
 
