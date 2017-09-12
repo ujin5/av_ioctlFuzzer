@@ -142,7 +142,7 @@ class COMP_FUZZ:
         FIRST_HEADER = self.INPUT[:0x7]
         
         ARC_HEADER = pyZZUF(self.INPUT[0x7:0x9]).mutate().tostring()
-        ARC_HEADER += INPUT[0x9:0xE]
+        ARC_HEADER += self.INPUT[0x9:0xE]
         ARC_HEADER += pyZZUF(INPUT[0xE:0x14]).mutate().tostring()
 
         LAST_HEADER = self.INPUT[-7:]
