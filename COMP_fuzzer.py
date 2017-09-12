@@ -105,7 +105,7 @@ class COMP_FUZZ:
 
         rdata += zip_THIRD_HEADER(THIRD_SECTION)
 
-        
+        return rdata
 
     def gzip_fuzz(self):
         
