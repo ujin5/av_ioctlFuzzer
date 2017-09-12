@@ -148,7 +148,7 @@ class COMP_FUZZ:
         LAST_HEADER = self.INPUT[-7:]
         
         rdata = ""
-        rdata += FIRST_SECTION
+        rdata += FIRST_HEADER
         rdata += ARC_HEADER
         rdata += self.INPUT[0x14:-7]
         rdata += LAST_HEADER
