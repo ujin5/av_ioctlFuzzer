@@ -93,14 +93,14 @@ class COMP_FUZZ:
         SECOND_SECTION = self.INPUT[self.INPUT.find(SECOND_SIGN) : self.INPUT.find(THIRD_SIGN)]
         THIRD_SECTION = self.INPUT[self.INPUT.find(THIRD_SIGN):]
 
-        fileCNT = FIRST_SECTION.count(FIRST_SECTION)
+        fileCNT = FIRST_SECTION.count(FIRST_SIGN)
 
         rdata = "" 
 
         for i in range(fileCNT):
             rdata += self.zip_FIRST_HEADER(FIRST_SIGN + FIRST_SECTION.split(FIRST_SIGN)[i+1])
 
-        for i in range(fileCNT):
+        for j in range(fileCNT):
             rdata += self.zip_SECOND_HEADER(SECOND_SIGN + SECOND_SECTION.split(SECOND_SIGN)[i+1])
 
         rdata += self.zip_THIRD_HEADER(THIRD_SECTION)
