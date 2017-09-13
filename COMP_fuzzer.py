@@ -19,7 +19,7 @@ class COMP_FUZZ:
 
     def Mutation(self):
 
-        ext = self.FILENAME.split(".")[1]
+        ext = self.FILENAME.split(".")[-1]
     
         if(ext == "zip"):
             self.new_data = self.zip_fuzz()
@@ -59,13 +59,12 @@ class COMP_FUZZ:
 
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(data[4:10]).mutate().tostring()
-        rdata += data[10:12]
+        rdata += pyZZUF(data[4:8]).mutate().tostring()
+        rdata += data[8:12]
         rdata += pyZZUF(data[12:16]).mutate().tostring()
         rdata += data[16:34]        # decrc, decompressed size, filename length, etc.
         rdata += pyZZUF(data[34:42]).mutate().tostring()
-        rdata += data[42:46]
-        rdata += pyZZUF(data[46:]).mutate().tostring()
+        rdata += data[42:]
 
         return rdata
 
@@ -108,6 +107,8 @@ class COMP_FUZZ:
         return rdata
 
     def gzip_fuzz(self):
+
+        length = len(self.INPUT)
         
         SIGN = self.INPUT[:2]
         CHECKSUM = self.INPUT[length-8:length-4]
@@ -151,6 +152,8 @@ class COMP_FUZZ:
         rdata += FIRST_HEADER
         rdata += ARC_HEADER
         rdata += self.INPUT[0x14:-7]
-        rdata += LAST_HEADER
+        rdata += pyZZUF(LAST_HEADER[:2]).mutate().tostring()
+        rdata += LAST_HEADER[2:3]
+        rdata += pyZZUF(LAST_HEADER[3:7]).mutate().tostring()
         
         return rdata
