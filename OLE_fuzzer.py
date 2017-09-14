@@ -27,7 +27,7 @@ class OLE_FUZZ:
         data = self.fp.read()
         
         # 확장자 확인하기
-        ext = self.target.split(".")[1]
+        ext = self.FILENAME.split(".")[1]
         #print "file extension : %s" % ext
         
         # 확장자별로 맞춤형 mutation하기
@@ -40,7 +40,7 @@ class OLE_FUZZ:
         
         # mutation된 값을 파일에 쓰기
         if self.new_data != None:
-            fp = open(self.target, "wb")
+            fp = open(self.OUT_DIR + self.FILENAME, "wb")
             fp.write(self.new_data)
 
     #------------------------------------------------------------
