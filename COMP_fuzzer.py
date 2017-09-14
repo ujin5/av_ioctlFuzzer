@@ -153,7 +153,7 @@ class COMP_FUZZ:
         rdata += ARC_HEADER
         rdata += self.INPUT[0x14:-7]
         rdata += pyZZUF(LAST_HEADER[:2]).mutate().tostring()
-        rdata += LAST_HEADER[2:3]
-        rdata += pyZZUF(LAST_HEADER[3:7]).mutate().tostring()
+        rdata += LAST_HEADER[2:4]
+        rdata += pyZZUF(LAST_HEADER[4:7]).mutate().tostring()
         
         return rdata
