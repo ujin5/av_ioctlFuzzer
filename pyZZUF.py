@@ -44,7 +44,7 @@ DEFAULT_CTX = 1
 
 # The default fuzzing ratio is, arbitrarily, 0.4%. The minimal fuzzing
 # ratio is 0.000000001% (less than one bit changed on a whole DVD).
-DEFAULT_RATIO = 0.6
+DEFAULT_RATIO = 0.004
 DEFAULT_RATIO_STEP = 0.001
 MIN_RATIO = 0.000000001
 MAX_RATIO = 5.0
