@@ -46,10 +46,7 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(data[4:8]).mutate().tostring()     #frversion & flags
-        rdata += data[8:10]
-        rdata += pyZZUF(data[10:26]).mutate().tostring()
-        rdata += data[26:]        
+        rdata += pyZZUF(data[4:]).mutate().tostring()     #frversion & flags
     
         return rdata
 
@@ -59,13 +56,8 @@ class COMP_FUZZ:
 
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(data[4:8]).mutate().tostring()
-        rdata += data[8:12]
-        rdata += pyZZUF(data[12:16]).mutate().tostring()
-        rdata += data[16:34]        # decrc, decompressed size, filename length, etc.
-        rdata += pyZZUF(data[34:42]).mutate().tostring()
-        rdata += data[42:]
-
+        rdata += pyZZUF(data[4:]).mutate().tostring()
+        
         return rdata
 
     def zip_THIRD_HEADER(self, data):
@@ -75,9 +67,8 @@ class COMP_FUZZ:
         rdata = ""
         rdata += SIGN
         rdata += data[4:6]
-        rdata += pyZZUF(data[6:16]).mutate().tostring()
-        rdata += data[16:]
-
+        rdata += pyZZUF(data[6:]).mutate().tostring()
+        
         return rdata
 
     def zip_fuzz(self):
@@ -111,21 +102,14 @@ class COMP_FUZZ:
         length = len(self.INPUT)
         
         SIGN = self.INPUT[:2]
-        CHECKSUM = self.INPUT[length-8:length-4]
-        FILESIZE = self.INPUT[length-4:]
-
+        
         rdata = ""
         rdata += SIGN
-        rdata += self.INPUT[2:4]    # compression method & flag
-        rdata += pyZZUF(self.INPUT[4:10]).mutate().tostring()
-        rdata += self.INPUT[10:length-8]
-        rdata += CHECKSUM
-        rdata += pyZZUF(FILESIZE[:2]).mutate().tostring()   # upper 2 bytes
-        rdata += FILESIZE[2:]
-
+        rdata += pyZZUF(self.INPUT[2:]).mutate().tostring()
+        
         return rdata    
 
-    def sevenzip_fuzz(self):   # so dirty......
+    def sevenzip_fuzz(self):   
     
         SIGN = self.INPUT[:6]
 
@@ -142,18 +126,8 @@ class COMP_FUZZ:
     
         FIRST_HEADER = self.INPUT[:0x7]
         
-        ARC_HEADER = pyZZUF(self.INPUT[0x7:0x9]).mutate().tostring()
-        ARC_HEADER += self.INPUT[0x9:0xE]
-        ARC_HEADER += pyZZUF(self.INPUT[0xE:0x14]).mutate().tostring()
-
-        LAST_HEADER = self.INPUT[-7:]
-        
         rdata = ""
         rdata += FIRST_HEADER
-        rdata += ARC_HEADER
-        rdata += self.INPUT[0x14:-7]
-        rdata += pyZZUF(LAST_HEADER[:2]).mutate().tostring()
-        rdata += LAST_HEADER[2:4]
-        rdata += pyZZUF(LAST_HEADER[4:7]).mutate().tostring()
+        rdata += pyZZUF(self.INPUT[7:]).mutate().tostring()
         
         return rdata
