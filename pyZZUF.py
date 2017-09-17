@@ -23,6 +23,15 @@ else:
 	integer_types = int
 
 # A bit of zzuf-magic :/
+value = []
+value.append(chr(0x00)*4)
+value.append(chr(0x00)*4)
+value.append(chr(0x01)*4)
+value.append(chr(0xff)*4)
+value.append(chr(0x01)*4)
+value.append(chr(0xcc)*4)
+value.append(chr(0x7f) + chr(0xff)*3)
+
 ZZUF_MAGIC0 = 0x12345678
 ZZUF_MAGIC1 = 0x33ea84f7
 ZZUF_MAGIC2 = 0x783bc31f
@@ -44,7 +53,7 @@ DEFAULT_CTX = 1
 
 # The default fuzzing ratio is, arbitrarily, 0.4%. The minimal fuzzing
 # ratio is 0.000000001% (less than one bit changed on a whole DVD).
-DEFAULT_RATIO = 0.004
+DEFAULT_RATIO = 0.6
 DEFAULT_RATIO_STEP = 0.001
 MIN_RATIO = 0.000000001
 MAX_RATIO = 5.0
@@ -222,40 +231,52 @@ class pyZZUF(object):
 			# Add some random dithering to handle ratio < 1.0/CHUNKBYTES
 			loop_bits = uint32((self._ratio * (8 * CHUNKBYTES) * 1000000.0 + self._zz_rand(1000000)) / 1000000.0)
 
-			for x in xrange(loop_bits):
+			while(loop_bits > 0):
 				idx = self._zz_rand(CHUNKBYTES)
-				bit = 1 << self._zz_rand(8)
-				fuzz_data[idx] ^= bit
+                                if(idx > (CHUNKBYTES -4)):
+                                        continue
+                                idx2 = self._zz_rand(6)
+				#bit = 1 << self._zz_rand(8)
+				fuzz_data[idx:idx+4] = value[idx2]
+				loop_bits -= 4
 
 			start = i * CHUNKBYTES if i * CHUNKBYTES > self._pos else self._pos
-			stop = (i + 1) * CHUNKBYTES if (i + 1) * CHUNKBYTES < self._pos + self._buf_length else self._pos + self._buf_length
+			stop = (i + 4) * CHUNKBYTES if (i + 4) * CHUNKBYTES < self._pos + self._buf_length else self._pos + self._buf_length
 
-			for j in xrange(start, stop):
+			for j in xrange(start, stop, 4):
 
 				if self._fuzz_bytes is not None and not self._zz_isinrange(j): # not in one of the ranges skip byte
 					continue
 				elif self._offset > 0 and j < self._offset: # if index of byte in offset-range then skip it
 					continue
 				
-				byte = self._buf[j]
+				#byte = self._buf[j:j+4]
 				
 				# if byte is protected, then skip it
 				if self._protected is not None and byte in self._protected:
 					continue
 
-				fuzz_byte = fuzz_data[j % CHUNKBYTES]
+                                IDX = j % CHUNKBYTES
+                                
+                                if(IDX > (CHUNKBYTES -4)):
+                                        continue
 
+				fuzz_str = fuzz_data[IDX : IDX+4]
+
+                                '''
 				# skip nulled
 				if not fuzz_byte:
 					continue
-
+                                
+                                
 				if self._fuzz_mode == FUZZ_MODE_SET:
-					byte |= fuzz_byte
+					byte = fuzz_byte
 				elif self._fuzz_mode == FUZZ_MODE_UNSET:
-					byte &= ~fuzz_byte
+					byte = fuzz_byte
 				else:
-					byte ^= fuzz_byte
-				
+					byte = fuzz_byte
+				'''
+                                
 				# if byte is not permitted, then skip it
 				if self._permitted is not None and byte not in self._permitted:
 					continue
@@ -263,15 +284,16 @@ class pyZZUF(object):
 				# if byte is refused, then skip it
 				if self._refused is not None and byte in self._refused:
 					continue
-				
-				self._buf[j] = byte
+                                if(j+3 < stop):
+                                        for i in range(4):
+                                                self._buf[j+i] = fuzz_str[i]
 
-			i += 1
+			i += 4
 
 		return pyZZUFArray('B', self._buf).set_state(self._seed, self._ratio, self._iter)
 
 	def _zz_frange(self, start, stop, step):
-	  while start <= stop:
+		while start <= stop:
 			next_state = (yield start)
 			start = double(start + step)
 			if next_state:
