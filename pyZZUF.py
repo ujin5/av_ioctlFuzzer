@@ -235,7 +235,7 @@ class pyZZUF(object):
 				idx = self._zz_rand(CHUNKBYTES)
                                 if(idx > (CHUNKBYTES -4)):
                                         continue
-                                idx2 = self._zz_rand(6)
+                                idx2 = self._zz_rand(7)
 				#bit = 1 << self._zz_rand(8)
 				fuzz_data[idx:idx+4] = value[idx2]
 				loop_bits -= 4
