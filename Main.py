@@ -10,6 +10,7 @@ import shutil
 import time
 import sys
 import OLE_fuzzer
+import PDF_fuzzer
 import PE_fuzzer
 import COMP_fuzzer
 import subprocess
@@ -320,6 +321,7 @@ class file_fuzzer:
 	def mutate_file( self ):
 		OLE_list = ["hwp", "doc", "ppt", "xls"]
 		PE_list = ["exe"]
+		PDF_list = ["pdf"]
 		COMP_list = ["zip", "gz", "7z", "rar"]
 
 		print "[*] Selected file : %s" % self.orig_file
@@ -338,6 +340,14 @@ class file_fuzzer:
 		  #print self.orig_filee
 		  #print self.tmp_file
 		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
+		  fuzzer.Mutation()
+
+		if(ext in PDF_list):
+		  #print self.sample_dir
+		  #print self.tmp_dir
+		  #print self.orig_filee
+		  #print self.tmp_file
+		  fuzzer = PDF_fuzzer.PDF_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 
 		if(ext in OLE_list):
