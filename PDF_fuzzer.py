@@ -9,7 +9,7 @@ from pyZZUF import *
 from random import choice
 import shutil
 
-class OLE_FUZZ:
+class PDF_FUZZ:
 
     def __init__(self, seed_dir, out_dir, filename):
         self.SEED_DIR = seed_dir
