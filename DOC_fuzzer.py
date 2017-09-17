@@ -1,8 +1,8 @@
 # -*- coding:utf-8 -*-
-# Module : OLE_fuzzer.py
+# Module : DOC_fuzzer.py
 
 #------------------------------------------------------------
-# 설명 : OLE 구조를 가지는 hwp, doc, ppt, xls 확장자를 가진 파일을 뮤테이션시킨다.
+# 설명 : Document 파일을 뮤테이션시킨다.
 #------------------------------------------------------------
 import os
 from pyZZUF import *
