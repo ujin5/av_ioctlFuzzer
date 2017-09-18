@@ -26,6 +26,7 @@ else:
 value = []
 value.append(chr(0x00)*4)
 value.append(chr(0x00)*4)
+value.append(chr(0x00)*4)
 value.append(chr(0x01)*4)
 value.append(chr(0xff)*4)
 value.append(chr(0x01)*4)
@@ -233,17 +234,22 @@ class pyZZUF(object):
 
 			while(loop_bits > 0):
 				idx = self._zz_rand(CHUNKBYTES)
-                                if(idx > (CHUNKBYTES -4)):
+                                if(idx > (CHUNKBYTES -16)):
                                         continue
-                                idx2 = self._zz_rand(7)
+                                idx2 = self._zz_rand(8)
 				#bit = 1 << self._zz_rand(8)
-				fuzz_data[idx:idx+4] = value[idx2]
-				loop_bits -= 4
+                                if(loop_bits > 16):
+                                        fuzz_data[idx:idx+16] = value[idx2]*4
+                                        loop_bits -= 16
+                                else:
+                                        fuzz_data[idx:idx+loop_bits] = value[idx2] * (loop_bits / 4) + value[idx2][:(loop_bits % 4)]
+                                        break
+                
 
 			start = i * CHUNKBYTES if i * CHUNKBYTES > self._pos else self._pos
-			stop = (i + 4) * CHUNKBYTES if (i + 4) * CHUNKBYTES < self._pos + self._buf_length else self._pos + self._buf_length
+			stop = (i + 16) * CHUNKBYTES if (i + 16) * CHUNKBYTES < self._pos + self._buf_length else self._pos + self._buf_length
 
-			for j in xrange(start, stop, 4):
+			for j in xrange(start, stop, 16):
 
 				if self._fuzz_bytes is not None and not self._zz_isinrange(j): # not in one of the ranges skip byte
 					continue
@@ -258,10 +264,10 @@ class pyZZUF(object):
 
                                 IDX = j % CHUNKBYTES
                                 
-                                if(IDX > (CHUNKBYTES -4)):
-                                        continue
-
-				fuzz_str = fuzz_data[IDX : IDX+4]
+                                if(IDX > (CHUNKBYTES -16)):
+                                        fuzz_str = fuzz_data[IDX : CHUNKBYTES]
+                                else:
+                                        fuzz_str = fuzz_data[IDX : IDX+16]
 
                                 '''
 				# skip nulled
@@ -284,16 +290,16 @@ class pyZZUF(object):
 				# if byte is refused, then skip it
 				if self._refused is not None and byte in self._refused:
 					continue
-                                if(j+3 < stop):
-                                        for i in range(4):
+                                for i in range(min((stop-j), len(fuzz_str))):
                                                 self._buf[j+i] = fuzz_str[i]
+                                                       
 
-			i += 4
+			i += 16
 
 		return pyZZUFArray('B', self._buf).set_state(self._seed, self._ratio, self._iter)
 
 	def _zz_frange(self, start, stop, step):
-		while start <= stop:
+	  while start <= stop:
 			next_state = (yield start)
 			start = double(start + step)
 			if next_state:
