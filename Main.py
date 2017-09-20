@@ -350,20 +350,13 @@ class file_fuzzer:
 
 		return
 
-
 if __name__ == "__main__":
 
 	os.system( "mkdir C:\\fuzz\\in C:\\fuzz\\temp C:\\fuzz\\crash" )
 
 	print "[*] File Fuzzer."
 	exe_path = ("C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe")
-
-	temp = "hello"
-	rada = Mut_Rada.radamsa(temp)
-	rada = rada.mutate()
-	print rada
-	time.sleep(100)
-		
+	
 	if exe_path is not None:
 		fuzzer = file_fuzzer( exe_path)
 		fuzzer.fuzz()
