@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿#-*- coding: utf-8 -*-
 from pydbg import *
 from pydbg.defines import *
 
@@ -14,7 +14,7 @@ import PE_fuzzer
 import COMP_fuzzer
 import subprocess
 import re
-
+import Mut_Rada
 
 
 class file_fuzzer:
@@ -357,6 +357,12 @@ if __name__ == "__main__":
 
 	print "[*] File Fuzzer."
 	exe_path = ("C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe")
+
+	temp = "hello"
+	rada = Mut_Rada.radamsa(temp)
+	rada = rada.mutate()
+	print rada
+	time.sleep(100)
 		
 	if exe_path is not None:
 		fuzzer = file_fuzzer( exe_path)
