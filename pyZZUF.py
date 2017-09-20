@@ -27,11 +27,16 @@ value = []
 value.append(chr(0x00)*4)
 value.append(chr(0x00)*4)
 value.append(chr(0x00)*4)
+value.append(chr(0x30)*4)
+value.append(chr(0x30)*4)
+value.append(chr(0x30)*4)
+value.append(chr(0x30)*4)
+value.append(chr(0x30)*4)
 value.append(chr(0x01)*4)
 value.append(chr(0xff)*4)
-value.append(chr(0x01)*4)
 value.append(chr(0xcc)*4)
-value.append(chr(0x7f) + chr(0xff)*3)
+value.append(chr(0xbe)*4)
+
 
 ZZUF_MAGIC0 = 0x12345678
 ZZUF_MAGIC1 = 0x33ea84f7
@@ -54,7 +59,7 @@ DEFAULT_CTX = 1
 
 # The default fuzzing ratio is, arbitrarily, 0.4%. The minimal fuzzing
 # ratio is 0.000000001% (less than one bit changed on a whole DVD).
-DEFAULT_RATIO = 0.6
+DEFAULT_RATIO = 0.3
 DEFAULT_RATIO_STEP = 0.001
 MIN_RATIO = 0.000000001
 MAX_RATIO = 5.0
@@ -212,7 +217,7 @@ class pyZZUF(object):
 		hi, lo = self._ctx // 12773, self._ctx % 12773
 		x = 16807 * lo - 2836 * hi
 		if x <= 0:
-			x += 0x7fffffff
+                        x += 0x7fffffff
 		self._ctx = x
 		return uint32(self._ctx % maxv)
 
@@ -236,7 +241,7 @@ class pyZZUF(object):
 				idx = self._zz_rand(CHUNKBYTES)
                                 if(idx > (CHUNKBYTES -16)):
                                         continue
-                                idx2 = self._zz_rand(8)
+                                idx2 = self._zz_rand(12)
 				#bit = 1 << self._zz_rand(8)
                                 if(loop_bits > 16):
                                         fuzz_data[idx:idx+16] = value[idx2]*4
@@ -291,7 +296,7 @@ class pyZZUF(object):
 				if self._refused is not None and byte in self._refused:
 					continue
                                 for i in range(min((stop-j), len(fuzz_str))):
-                                                self._buf[j+i] = fuzz_str[i]
+                                        self._buf[j+i] = fuzz_str[i]
                                                        
 
 			i += 16
@@ -299,7 +304,7 @@ class pyZZUF(object):
 		return pyZZUFArray('B', self._buf).set_state(self._seed, self._ratio, self._iter)
 
 	def _zz_frange(self, start, stop, step):
-	  while start <= stop:
+                while start <= stop:
 			next_state = (yield start)
 			start = double(start + step)
 			if next_state:
