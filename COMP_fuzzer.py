@@ -47,7 +47,7 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += SIGN
-        rdata += radamsa(data[4:]).mutate().tostring()     #frversion & flags
+        rdata += radamsa(data[4:]).mutate()    #frversion & flags
     
         return rdata
 
@@ -57,7 +57,7 @@ class COMP_FUZZ:
 
         rdata = ""
         rdata += SIGN
-        rdata += radamsa(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate()
         
         return rdata
 
@@ -68,7 +68,7 @@ class COMP_FUZZ:
         rdata = ""
         rdata += SIGN
         rdata += data[4:6]
-        rdata += radamsa(data[6:]).mutate().tostring()
+        rdata += radamsa(data[6:]).mutate()
         
         return rdata
 
@@ -106,7 +106,7 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += SIGN
-        rdata += radamsa(self.INPUT[2:]).mutate().tostring()
+        rdata += radamsa(self.INPUT[2:]).mutate()
         
         return rdata    
 
@@ -118,7 +118,7 @@ class COMP_FUZZ:
     
         rdata = ""
         rdata += SIGN
-        rdata += zzbuf.mutate().tostring()
+        rdata += zzbuf.mutate()
 
         return rdata
 
@@ -129,6 +129,6 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += FIRST_HEADER
-        rdata += radamsa(self.INPUT[7:]).mutate().tostring()
+        rdata += radamsa(self.INPUT[7:]).mutate()
         
         return rdata

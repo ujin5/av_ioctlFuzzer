@@ -15,12 +15,15 @@ def wincmd(cmd):
 class radamsa(object):
 	def __init__(self, data):
 		self.data = data
+		f = open("temp", "wb")
+		f.write(self.data)
+		f.close()
 
 	def mutate(self):
-		cmd ="echo " + self.data + "| radamsa"
+		cmd ="radamsa temp"
 		# print cmd
 		pipe = wincmd(cmd)
 		output, errors = pipe.communicate()
 		pipe.stdin.close()
 		# print output
-		return self.data
+		return output

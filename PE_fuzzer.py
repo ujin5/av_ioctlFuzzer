@@ -1,6 +1,7 @@
 from pyZZUF import *
 from fuzz_utils import *
 from random import *
+from Mut_Rada import *
 IMAGE_DOS_HEADER = 0x40
 IMAGE_FILE_HEADER =  0x4
 IMAGE_OPTIONAL_HEADER = IMAGE_FILE_HEADER + 0x14
@@ -36,9 +37,9 @@ class PE_FUZZ:
 		rdata += self.DATA[:0x80-1]
 		rdata += self.DATA[0x80:0x177]
 
-		ep_zzuf3 = pyZZUF(self.DATA[0xAC:])	
-		rdata += ep_zzuf3.mutate().tostring() 
-
+		ep_zzuf3 = radamsa(self.DATA[0xAC:])
+		rdata += ep_zzuf3.mutate()
+		
 		return rdata
 
 	def NonPackMute(self):
@@ -49,16 +50,16 @@ class PE_FUZZ:
 		
 		rdata += self.PE_HEADER[0x0:0x4] # Signature
 		
-		lfh_zzuf = pyZZUF(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
-		rdata += lfh_zzuf.mutate().tostring() # PE_HEADER 1 
+		lfh_zzuf = radamsa(self.PE_HEADER[IMAGE_FILE_HEADER:IMAGE_OPTIONAL_HEADER])
+		rdata += lfh_zzuf.mutate() # PE_HEADER 1 
 		
-		loh_zzuf1 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
-		rdata += loh_zzuf1.mutate().tostring() # PE_HEADER 2
+		loh_zzuf1 = radamsa(self.PE_HEADER[IMAGE_OPTIONAL_HEADER:IMAGE_OPTIONAL_HEADER+0x10])
+		rdata += loh_zzuf1.mutate() # PE_HEADER 2
 		
 		rdata += struct.pack('<I',self.EP) # EP
 		
-		loh_zzuf2 = pyZZUF(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:])
-		rdata += loh_zzuf2.mutate().tostring() # PE_HEADER 3 
+		loh_zzuf2 = radamsa(self.PE_HEADER[IMAGE_OPTIONAL_HEADER+0x14:])
+		rdata += loh_zzuf2.mutate() # PE_HEADER 3 
 		
 		return rdata
 	
