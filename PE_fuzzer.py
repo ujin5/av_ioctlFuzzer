@@ -34,10 +34,10 @@ class PE_FUZZ:
 
 		rdata = ""
 		
-		rdata += self.DATA[:0x80-1]
-		rdata += self.DATA[0x80:0x177]
+		rdata += self.DATA[:self.e_lfanew-1]
+		rdata += self.DATA[self.e_lfanew:self.e_lfanew+0x2+22]
 
-		ep_zzuf3 = radamsa(self.DATA[0xAC:])
+		ep_zzuf3 = radamsa(self.DATA[self.e_lfanew+0x2+22+1:])
 		rdata += ep_zzuf3.mutate()
 		
 		return rdata
