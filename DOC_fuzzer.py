@@ -4,6 +4,7 @@
 #------------------------------------------------------------
 # 설명 : Document 파일을 뮤테이션시킨다.
 #------------------------------------------------------------
+from Mut_Rada import *
 import os
 from pyZZUF import *
 from random import choice
@@ -62,7 +63,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += pyZZUF(data[8:]).mutate().tostring()
+        rdata += radamsa(data[8:]).mutate().tostring()
         
         return rdata
 
@@ -78,12 +79,12 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += pyZZUF(data[8:512]).mutate().tostring()
+        rdata += radamsa(data[8:512]).mutate().tostring()
 
         sub_signature = data[512:516]
-
+        rdata = rdata[:512]
         rdata += sub_signature
-        rdata += pyZZUF(data[516:]).mutate().tostring()
+        rdata += radamsa(data[516:]).mutate().tostring()
 
         return rdata
 
@@ -99,7 +100,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += pyZZUF(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate().tostring()
         
         return rdata
 
@@ -115,7 +116,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += pyZZUF(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate().tostring()
         
         return rdata
 
@@ -131,6 +132,6 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += pyZZUF(data[6:]).mutate().tostring()
+        rdata += radamsa(data[6:]).mutate().tostring()
         
         return rdata
