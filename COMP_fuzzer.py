@@ -2,6 +2,7 @@ from pyZZUF import *
 import os
 import ZIP_fuzz 
 import zlib
+from Mut_Rada import *
 # import fuzz_utils
 
 
@@ -46,7 +47,7 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(data[4:]).mutate().tostring()     #frversion & flags
+        rdata += radamsa(data[4:]).mutate().tostring()     #frversion & flags
     
         return rdata
 
@@ -56,7 +57,7 @@ class COMP_FUZZ:
 
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate().tostring()
         
         return rdata
 
@@ -67,7 +68,7 @@ class COMP_FUZZ:
         rdata = ""
         rdata += SIGN
         rdata += data[4:6]
-        rdata += pyZZUF(data[6:]).mutate().tostring()
+        rdata += radamsa(data[6:]).mutate().tostring()
         
         return rdata
 
@@ -105,7 +106,7 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += SIGN
-        rdata += pyZZUF(self.INPUT[2:]).mutate().tostring()
+        rdata += radamsa(self.INPUT[2:]).mutate().tostring()
         
         return rdata    
 
@@ -113,7 +114,7 @@ class COMP_FUZZ:
     
         SIGN = self.INPUT[:6]
 
-        zzbuf = pyZZUF(self.INPUT[6:])
+        zzbuf = radamsa(self.INPUT[6:])
     
         rdata = ""
         rdata += SIGN
@@ -128,6 +129,6 @@ class COMP_FUZZ:
         
         rdata = ""
         rdata += FIRST_HEADER
-        rdata += pyZZUF(self.INPUT[7:]).mutate().tostring()
+        rdata += radamsa(self.INPUT[7:]).mutate().tostring()
         
         return rdata
