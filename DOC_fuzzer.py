@@ -63,7 +63,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += radamsa(data[8:]).mutate().tostring()
+        rdata += radamsa(data[8:]).mutate()
         
         return rdata
 
@@ -79,12 +79,12 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += radamsa(data[8:512]).mutate().tostring()
+        rdata += radamsa(data[8:512]).mutate()
 
         sub_signature = data[512:516]
         rdata = rdata[:512]
         rdata += sub_signature
-        rdata += radamsa(data[516:]).mutate().tostring()
+        rdata += radamsa(data[516:]).mutate()
 
         return rdata
 
@@ -100,7 +100,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += radamsa(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate()
         
         return rdata
 
@@ -116,7 +116,7 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += radamsa(data[4:]).mutate().tostring()
+        rdata += radamsa(data[4:]).mutate()
         
         return rdata
 
@@ -132,6 +132,6 @@ class DOC_FUZZ:
 
         rdata = ""
         rdata += signature
-        rdata += radamsa(data[6:]).mutate().tostring()
+        rdata += radamsa(data[6:]).mutate()
         
         return rdata
