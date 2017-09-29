@@ -345,7 +345,7 @@ class file_fuzzer:
 		  fuzzer = DOC_fuzzer.DOC_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 		else:
-		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
+		  fuzzer = ETC_fuzzer.ETC_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
 		print "[*] Fin Fuzz"
 		return
