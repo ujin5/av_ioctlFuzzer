@@ -105,6 +105,7 @@ if __name__ == "__main__":
 
 	print "[*] Start File Fuzzer."
 	fuzzer = file_fuzzer()
+	fuzzer.rename_filename()
 	fuzzer.fuzz()
 
 	print "[*] Finish File Fuzzer."
