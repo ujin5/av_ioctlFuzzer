@@ -34,6 +34,12 @@ class COMP_FUZZ:
         elif(ext == "rar"):
             self.new_data = self.rar_fuzz()
 
+        elif(ext == "arj"):
+            self.new_data = self.arj_fuzz()
+
+        elif(ext == "cab"):
+            self.new_data = self.arj_fuzz()
+
         else:
             self.new_data = None
 
@@ -132,3 +138,23 @@ class COMP_FUZZ:
         rdata += radamsa(self.INPUT[7:]).mutate()
         
         return rdata
+
+    def arj_fuzz(self):
+
+        FIRST_HEADER = self.INPUT[:2]
+
+        rdata = ""
+        rdata += FIRST_HEADER
+        rdata += radamsa(self.INPUT[2:]).mutate()
+
+        return rdata
+
+    def cab_fuzz(self)
+        FIRST_HEADER = self.INPUT[:4]
+        rdata = ""
+        rdata = FIRST_HEADER
+        rdata += radamsa(self.INPUT[4:]).mutate()
+
+        return rdata
+
+

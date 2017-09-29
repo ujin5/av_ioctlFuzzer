@@ -320,7 +320,7 @@ class file_fuzzer:
 	def mutate_file( self ):
 		DOC_list = ["hwp", "doc", "ppt", "xls", "pdf", "chm", "rtf"]
 		PE_list = ["exe"]
-		COMP_list = ["zip", "gz", "7z", "rar"]
+		COMP_list = ["zip", "gz", "7z", "rar", "cab", "arj"]
 
 		print "[*] Selected file : %s" % self.orig_file
 		ext = self.orig_file.split(".")[-1]
@@ -330,24 +330,24 @@ class file_fuzzer:
 		  #print self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0]
 		  #print self.tmp_file
 		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
-		  fuzzer.Mutation()
-		   
-		if(ext in PE_list):
+		  fuzzer.Mutation()  
+		elif(ext in PE_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_filee
 		  #print self.tmp_file
 		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
-
-		if(ext in DOC_list):
+		elif(ext in DOC_list):
 		  #print self.sample_dir
 		  #print self.tmp_dir
 		  #print self.orig_file
 		  fuzzer = DOC_fuzzer.DOC_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
 		  fuzzer.Mutation()
+		else:
+		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
+		  fuzzer.Mutation()
 		print "[*] Fin Fuzz"
-
 		return
 
 if __name__ == "__main__":
