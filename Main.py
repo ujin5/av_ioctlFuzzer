@@ -12,6 +12,7 @@ import sys
 import DOC_fuzzer
 import PE_fuzzer
 import COMP_fuzzer
+import ETC_fuzzer
 import subprocess
 import re
 import Mut_Rada
