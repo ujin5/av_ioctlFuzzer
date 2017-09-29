@@ -16,8 +16,9 @@ class ETC_FUZZ:
         f = open(self.SEED_DIR + self.FILENAME, "rb")
         self.INPUT = f.read()
 
+
     def Mutation(self):
-    	self.etc_fuzz(self.INPUT)
+    	self.etc_fuzz()
 
 
 	def etc_fuzz(self):
