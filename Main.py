@@ -22,15 +22,20 @@ class file_fuzzer:
 	def __init__(self):
 		self.mutate_count		= 100
 		self.mutate_list		 = []
-		self.selected_list	   = [] # 크래시 트래킹에 사용할 리스트
+		self.selected_list		 = [] # 크래시 트래킹에 사용할 리스트
 		self.eip_list			= []	#크래시 중복체크 (EIP 기준)
-		self.orig_file		   = None
-		self.sample_dir		  = "C:\\fuzz\\in"
-		self.tmp_file			= None
-		self.tmp_dir			 = "C:\\fuzz\\temp"
-		self.count			   = 0
-		self.max			   = 0
+		self.sample_file			 = None
+		self.sample_dir			= "C:\\fuzz\\in\\"
+		self.numbering			= None
+		self.tmp_dir			 = "C:\\fuzz\\temp\\"
+		self.count				 = 0
+		self.max				 = 0
 
+	def rename_filename(self):
+		for name in os.listdir(self.sample_dir):
+			name_r = name.replace("-", "_")
+			os.rename(self.sample_dir + name, self.sample_dir + name_r)
+		print "[*] Finish to rename."
 
 	def wincmd(self, cmd):
 		return subprocess.Popen(cmd,
@@ -50,10 +55,13 @@ class file_fuzzer:
 	def file_picker(self):
 		file_list = os.listdir(self.sample_dir)
 		file_num = self.count % self.max
-		sel_file = str(time.time()).replace(".", "") + "_" + str(file_num) + "_" + file_list[file_num]
-		self.tmp_file = self.tmp_dir + "\\" + sel_file
-		self.orig_file = self.sample_dir + "\\" + file_list[file_num]
-		## shutil.copy(self.orig_file,  self.tmp_file)
+		tmp_time = int(time.time() * 100) % 100000000
+		if not os.path.isdir( self.tmp_dir + str(tmp_time / 10000) ):
+			os.system( "mkdir " +self.tmp_dir + str(tmp_time / 10000) )
+		self.numbering = str(tmp_time / 10000) + "\\" + str(tmp_time % 10000) + "-" + str(file_num) + "-"
+		self.tmp_file =  file_list[file_num]
+		self.sample_file = file_list[file_num]
+		## shutil.copy(self.sample_file,	self.tmp_file)
 		return
 
 	def fuzz(self):
@@ -68,32 +76,28 @@ class file_fuzzer:
 		PE_list = ["exe"]
 		COMP_list = ["zip", "gz", "7z", "rar", "cab", "arj"]
 
-		print "[*] Selected file : %s" % self.orig_file
-		ext = self.orig_file.split(".")[-1]
-		
+		#print self.sample_dir
+		#print self.tmp_dir + self.numbering
+		#print self.sample_file
+
+		print "[*] Selected file : %s" % self.sample_file
+		ext = self.sample_file.split(".")[-1]
+
 		if(ext in COMP_list):
-		  #print self.sample_dir
-		  #print self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0]
-		  #print self.tmp_file
-		  fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
-		  fuzzer.Mutation()  
+			fuzzer = COMP_fuzzer.COMP_FUZZ(self.sample_dir, self.tmp_dir + self.numbering, self.sample_file)
+			fuzzer.Mutation()	
 		elif(ext in PE_list):
-		  #print self.sample_dir
-		  #print self.tmp_dir
-		  #print self.orig_filee
-		  #print self.tmp_file
-		  fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
-		  fuzzer.Mutation()
+			fuzzer = PE_fuzzer.PE_FUZZ(self.sample_dir, self.tmp_dir + self.numbering, self.sample_file)
+			fuzzer.Mutation()
 		elif(ext in DOC_list):
-		  #print self.sample_dir
-		  #print self.tmp_dir
-		  #print self.orig_file
-		  fuzzer = DOC_fuzzer.DOC_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-", self.tmp_file.split("-")[-1])
-		  fuzzer.Mutation()
+			fuzzer = DOC_fuzzer.DOC_FUZZ(self.sample_dir, self.tmp_dir + self.numbering, self.sample_file)
+			fuzzer.Mutation()
 		else:
-		  fuzzer = ETC_fuzzer.ETC_FUZZ(self.sample_dir + "\\", self.tmp_dir+ "\\" + self.tmp_file.split("\\")[-1].split("-")[0] + "-" + self.tmp_file.split("\\")[-1].split("-")[1] + "-" , self.tmp_file.split("-")[-1])
-		  fuzzer.Mutation()
+			fuzzer = ETC_fuzzer.ETC_FUZZ(self.sample_dir, self.tmp_dir + self.numbering, self.sample_file)
+			fuzzer.Mutation()
 		print "[*] Fin Fuzz"
+
+		self.count += 1
 		return
 
 if __name__ == "__main__":
