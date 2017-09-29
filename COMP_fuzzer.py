@@ -149,7 +149,7 @@ class COMP_FUZZ:
 
         return rdata
 
-    def cab_fuzz(self)
+    def cab_fuzz(self):
         FIRST_HEADER = self.INPUT[:4]
         rdata = ""
         rdata = FIRST_HEADER
