@@ -24,7 +24,6 @@ class file_fuzzer:
 		self.mutate_list		 = []
 		self.selected_list	   = [] # 크래시 트래킹에 사용할 리스트
 		self.eip_list			= []	#크래시 중복체크 (EIP 기준)
-		self.exe_path			= exe_path
 		self.orig_file		   = None
 		self.sample_dir		  = "C:\\fuzz\\in"
 		self.tmp_file			= None
