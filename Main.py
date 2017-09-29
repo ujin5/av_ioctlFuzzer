@@ -19,7 +19,7 @@ import Mut_Rada
 
 
 class file_fuzzer:
-	def __init__(self, exe_path):
+	def __init__(self):
 		self.mutate_count		= 100
 		self.mutate_list		 = []
 		self.selected_list	   = [] # 크래시 트래킹에 사용할 리스트
@@ -51,7 +51,7 @@ class file_fuzzer:
 	def file_picker(self):
 		file_list = os.listdir(self.sample_dir)
 		file_num = self.count % self.max
-		sel_file = str(time.time()).replace(".", "") + "_" + str(file_num) + "-" + file_list[file_num]
+		sel_file = str(time.time()).replace(".", "") + "_" + str(file_num) + "_" + file_list[file_num]
 		self.tmp_file = self.tmp_dir + "\\" + sel_file
 		self.orig_file = self.sample_dir + "\\" + file_list[file_num]
 		## shutil.copy(self.orig_file,  self.tmp_file)
@@ -60,9 +60,9 @@ class file_fuzzer:
 	def fuzz(self):
 		
 		self.file_picker_setting()
-		self.file_picker()
-		self.mutate_file()
-
+		while True:
+			self.file_picker()
+			self.mutate_file()
 
 	def mutate_file( self ):
 		DOC_list = ["hwp", "doc", "ppt", "xls", "pdf", "chm", "rtf"]
@@ -98,14 +98,10 @@ class file_fuzzer:
 		return
 
 if __name__ == "__main__":
+	os.system( "mkdir C:\\fuzz\\in C:\\fuzz\\temp C:\\fuzz\\temp" )
 
-	os.system( "mkdir C:\\fuzz\\in C:\\fuzz\\temp C:\\fuzz\\crash" )
+	print "[*] Start File Fuzzer."
+	fuzzer = file_fuzzer()
+	fuzzer.fuzz()
 
-	print "[*] File Fuzzer."
-	exe_path = ("C:\\Program Files\\AhnLab\\V3Lite30\\V3LMedic.exe")
-	
-	if exe_path is not None:
-		fuzzer = file_fuzzer( exe_path)
-		fuzzer.fuzz()
-	else:
-		"[+] Error!"
+	print "[*] Finish File Fuzzer."
