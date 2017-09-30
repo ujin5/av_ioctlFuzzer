@@ -1,4 +1,5 @@
 @echo on
+mkdir C:\fuzz\fuzzer
 cd C:\fuzz\fuzzer
 rmdir /s /q C:\fuzz\fuzzer\av_ioctlFuzzer
 git clone https://github.com/pwn2expoit/av_ioctlFuzzer/
