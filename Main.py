@@ -1,6 +1,4 @@
 ﻿#-*- coding: utf-8 -*-
-from pydbg import *
-from pydbg.defines import *
 
 import utils
 import random
