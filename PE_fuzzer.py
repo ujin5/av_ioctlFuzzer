@@ -32,7 +32,7 @@ class PE_FUZZ:
 		print len(data)
 		self.e_lfanew = toDWORD(data[0x3C:0x40])
 		self.number_of_section = toWORD(data[self.e_lfanew : self.e_lfanew + 2])
-		self.size_of_op_header = toWORD(data[self.e_lfanew : self.e_lfanew + 0x14])
+		self.size_of_op_header = toWORD(data[self.e_lfanew + 0x14 : self.e_lfanew + 0x16])
 		self.DATA = data
 
 	def IsPacked(self):
@@ -40,3 +40,6 @@ class PE_FUZZ:
 			self.IS_PACKED = True 
 		else:
 			self.IS_PACKED = False
+
+#p = PE_FUZZ('C:\\radamsa\\test\\', 'C:\\radamsa\\test1\\', '1.exe' ) // test
+#p.Mutation()
