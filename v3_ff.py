@@ -52,6 +52,7 @@ class file_fuzzer:
 		self.ex_dbg		= False
 		self.ex_start_ASDsvc = False
 		self.folder_list = None
+		self.fcnt				= 0
 
 	def wincmd(self, cmd):
 		return subprocess.Popen(cmd,
@@ -59,16 +60,6 @@ class file_fuzzer:
 			stdin=subprocess.PIPE,
 			stdout=subprocess.PIPE,
 			stderr=subprocess.PIPE)
-
-	# 파일 선택
-	def file_picker(self):
-		file_list = os.listdir(self.sample_dir)
-		file_num = self.count % self.max
-		sel_file = str(time.time()).replace(".", "") + "-" + str(file_num) + "-" + file_list[file_num]
-		self.tmp_file = self.tmp_dir + "\\" + sel_file
-		self.orig_file = self.sample_dir + "\\" + file_list[file_num]
-		## shutil.copy(self.orig_file,  self.tmp_file)
-		return
 
 	# 에러를 추적하고 정보를 저장하기 위한 접근 위반 핸들러 
 	def handler_access_violation(self, pydbg):
@@ -91,22 +82,20 @@ class file_fuzzer:
 		self.crash_count = self.count
 
 		# 크래시 정보 로깅
-		crash_fd = open("C:\\fuzz\\crash\\" + str(time.time()).replace(".", "") + ".log","w")
+		tmp_time = str(time.time()).replace(".", "")
+		crash_fd = open("C:\\fuzz\\crash\\" + tmp_time + ".log","w")
 		crash_fd.write(self.crash)
 		crash_fd.close()
 		
-		print "1"
-
 		# 크래시 파일을 탐색
 		print "[*]Finding"
 		while True:
 			fnum = self.check_folder()
-			print ".",
 			time.sleep(0.5)
 			if(fnum != -1):
 				break
 
-		# 디버거 종료
+		# 디버거 종료`
 		print "[-]Terminate Debugger"
 		self.dbg_ads.terminate_process()
 		self.dbg_ads.close_handle(self.dbg_ads.h_process)
@@ -117,17 +106,23 @@ class file_fuzzer:
 		pydbg_ads_thread = threading.Thread(target=self.start_ASDsvc)
 		pydbg_ads_thread.setDaemon(0)
 		pydbg_ads_thread.start()
+
 		while self.ex_start_ASDsvc:
 			time.sleep(1)
 		self.running_exe = False
+		while self.check_process("v3lite.exe") == False:
+			time.sleep(1)
 		os.system("taskkill /F /IM v3lite.exe")	
 
-		print "[-]Backup Crash File"
+		print "[-]Backuping Crash File"
 		tnum = 0
 		while tnum < fnum:
-			shutil.move(self.tmp_dir + "\\" + self.folder_list[tnum] , self.notmp_dir + "\\" + self.folder_list[tnum])
+			try:
+				shutil.rmtree(self.tmp_dir + "\\" + self.folder_list[tnum])
+			except:  ## if failed, report it back to the user ##
+				print "[-]Delete Error " + self.tmp_dir + "\\" + self.folder_list[tnum]
 			tnum += 1
-		shutil.move(self.tmp_dir + "\\" + self.folder_list[fnum], "C:\\fuzz\\crash\\" + str(time.time()).replace(".", "") + self.folder_list[fnum])
+		shutil.move(self.tmp_dir + "\\" + self.folder_list[fnum], "C:\\fuzz\\crash\\" + tmp_time + self.folder_list[fnum])
 
 		print "[+]Fin to Exception handle"
 
@@ -147,7 +142,6 @@ class file_fuzzer:
 
 		'''
 		while True:
-
 			while self.running_cra:
 				time.sleep(1)
 
@@ -157,7 +151,6 @@ class file_fuzzer:
 			debugger_thread.start()
 
 			while self.ex_dbg:
-				print "wait"
 				time.sleep(1)
 			time.sleep(3)
 			# asd에 디버거 붙었어
@@ -176,16 +169,15 @@ class file_fuzzer:
 	def start_ASDsvc(self):
 		# asdsvc 살려 내기
 		self.ex_start_ASDsvc = True
-		while not self.check_process("ASDsvc.exe"):
-			self.running_exe = False
-			os.system("taskkill /F /IM v3lmedic.exe")
-			time.sleep(0.5)
-			os.system("taskkill /F /IM asdsvc.exe")
-			time.sleep(0.5)
-			os.system("taskkill /F /IM v3lite.exe")
-			time.sleep(3)
-			self.ex_start_ASDsvc = False
-			os.system( "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3Lite.exe\"" )
+		self.running_exe = False
+		os.system("taskkill /F /IM v3lmedic.exe")
+		time.sleep(0.5)
+		os.system("taskkill /F /IM asdsvc.exe")
+		time.sleep(0.5)
+		os.system("taskkill /F /IM v3lite.exe")
+		time.sleep(0.5)
+		self.ex_start_ASDsvc = False
+		os.system( "\"C:\\Program Files\\AhnLab\\V3Lite30\\V3Lite.exe\"" )
 
 	def check_folder(self):
 		#어떤 폴더 사용중인지 확인 함수
@@ -203,7 +195,7 @@ class file_fuzzer:
 		return -1
 
 	def check_process(self, id):
-		# asdsvc가 있는지 확인
+		# 입력 받은 프로세스가가 있는지 확인
 		cmd = "tasklist /FI \"IMAGENAME eq " + id + "\" /FO LIST"
 		pipe = self.wincmd(cmd)
 		output, errors = pipe.communicate()
@@ -220,7 +212,6 @@ class file_fuzzer:
 		# asdsvc가 있는지 확인
 		while True:
 			output = self.check_process("ASDsvc.exe")
-			print "out : " + str(output)
 			if not output:
 				# asd죽어 있는거야
 				print "[-] ASDsvc is dead, Starting ASDsvc"
@@ -228,6 +219,9 @@ class file_fuzzer:
 				pydbg_ads_thread.setDaemon(0)
 				pydbg_ads_thread.start()
 				while self.ex_start_ASDsvc:
+					time.sleep(1)
+				self.running_exe = False
+				while self.check_process("v3lite.exe") == False:
 					time.sleep(1)
 				os.system("taskkill /F /IM v3lite.exe")	
 				continue
@@ -246,7 +240,6 @@ class file_fuzzer:
 	def start_exe(self):
 		while True :
 			cmd = "\"" + self.exe_path + "\" /manual_scan /target:" + self.tmp_dir
-			print cmd
 			pipe = self.wincmd(cmd)
 			pipe.stdin.close()
 			time.sleep(1)
@@ -257,9 +250,27 @@ class file_fuzzer:
 				break
 			else:
 				print "[-]Restart medic"
+	
+	#남은 용량 확인함
+	def check_spcae(self):
+		cmd = "dir c:\\"
+		pipe = fuzzer.wincmd(cmd)
+		output, errors = pipe.communicate()
+		pipe.stdin.close()
+
+		if int(output.split("\n")[-2].split(" ")[-3].replace(",","")) < 10737418240:
+			tmp = 0
+			for dir_name in os.listdir(self.tmp_dir):
+				tmp += 1
+				try:
+					shutil.rmtree(self.tmp_dir + "\\" + dir_name)
+				except:  ## if failed, report it back to the user ##
+					print "[-]Delete Error " + self.tmp_dir + "\\" + self.folder_list[tnum]
+				if tmp > 10:
+					break
+		
 
 if __name__ == "__main__":
-
 	os.system( "mkdir C:\\fuzz\\in C:\\fuzz\\temp C:\\fuzz\\crash C:\\fuzz\\notemp" )
 
 	print "[*] File Fuzzer for V3."
@@ -267,6 +278,7 @@ if __name__ == "__main__":
 	
 	if exe_path is not None:
 		fuzzer = file_fuzzer( exe_path)
+		fuzzer.check_spcae()
 		fuzzer.fuzz()
 	else:
 		"[+] Error!"
